@@ -1,6 +1,7 @@
 package fr.sixela.mechawalkers;
 
 import com.mojang.logging.LogUtils;
+import fr.sixela.mechawalkers.block.MechControlSeatBlock;
 import fr.sixela.mechawalkers.item.WeldingTorchItem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.Registries;
@@ -37,9 +38,7 @@ import java.awt.*;
 @Mod(MechaWalkersMod.MODID)
 public class MechaWalkersMod
 {
-    // Define mod id in a common place for everything to reference
     public static final String MODID = "mecha_walkers";
-    // Directly reference a slf4j logger
     private static final Logger LOGGER = LogUtils.getLogger();
 
 
@@ -48,6 +47,8 @@ public class MechaWalkersMod
     // ----------------------- BLOCKS ----------------------- //
     public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, MODID);
     // Create a Deferred Register to hold Items which will all be registered under the "examplemod" namespace
+    public static final RegistryObject<Block> MECH_CONTROL_SEAT_BLOCK = BLOCKS.register("mech_control_seat",
+        () -> new MechControlSeatBlock(BlockBehaviour.Properties.copy(Blocks.PISTON).noOcclusion()));
 
 
 
@@ -58,6 +59,8 @@ public class MechaWalkersMod
     public static final RegistryObject<Item> WELDING_TORCH = ITEMS.register("welding_torch",
             () -> new WeldingTorchItem(new Item.Properties()
                     .stacksTo(1)));
+    public static final RegistryObject<Item> MECH_CONTROL_SEAT_ITEM = ITEMS.register("mech_control_seat",
+            () -> new BlockItem(MECH_CONTROL_SEAT_BLOCK.get(), new Item.Properties()));
 
 
     // ----------------------- CREATIVE MODE TABS ----------------------- //
@@ -69,6 +72,7 @@ public class MechaWalkersMod
                     .title(Component.translatable("creativetab.mecha_walkers_tab"))
                     .displayItems((pParameters, pOutput) -> {
                         pOutput.accept(WELDING_TORCH.get()); //ADD ITEMS HERE
+                        pOutput.accept(MECH_CONTROL_SEAT_ITEM.get());
                     }).build());
 
     /*

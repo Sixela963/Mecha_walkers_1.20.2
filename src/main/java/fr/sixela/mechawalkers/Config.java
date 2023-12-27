@@ -17,6 +17,8 @@ import java.util.stream.Collectors;
 @Mod.EventBusSubscriber(modid = MechaWalkersMod.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class Config
 {
+    //TODO Actually make something of this all...
+
     private static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
 
     private static final ForgeConfigSpec.BooleanValue LOG_DIRT_BLOCK = BUILDER

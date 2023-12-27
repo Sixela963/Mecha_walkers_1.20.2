@@ -1,0 +1,31 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "wsw",
+    "lCl",
+    "rIr"
+  ],
+  "key": {
+    "C": {
+      "item": "minecraft:minecart"
+    },
+    "I": {
+      "item": "minecraft:iron_block"
+    },
+    "l": {
+      "item": "minecraft:lever"
+    },
+    "r": {
+      "item": "minecraft:redstone_torch"
+    },
+    "s": {
+      "item": "minecraft:saddle"
+    },
+    "w": {
+      "item": "minecraft:red_carpet"
+    }
+  },
+  "result": {
+    "item": "mecha_walkers:mech_control_seat"
+  }
+}

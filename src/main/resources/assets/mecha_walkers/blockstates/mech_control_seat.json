@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": {"model": "mecha_walkers:block/mech_control_seat"},
+    "facing=east": {"model": "mecha_walkers:block/mech_control_seat", "y": 90},
+    "facing=south": {"model": "mecha_walkers:block/mech_control_seat", "y": 180},
+    "facing=west": {"model": "mecha_walkers:block/mech_control_seat", "y": 270}
+  }
+}

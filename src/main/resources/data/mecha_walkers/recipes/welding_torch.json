@@ -1,0 +1,28 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " hO",
+    "bii",
+    "Ri "
+  ],
+  "key": {
+    "i": {
+      "item": "minecraft:iron_ingot"
+    },
+    "O": {
+      "item": "minecraft:obsidian"
+    },
+    "h": {
+      "item": "minecraft:hopper"
+    },
+    "b": {
+      "item": "minecraft:stone_button"
+    },
+    "R": {
+      "item": "minecraft:blaze_rod"
+    }
+  },
+  "result": {
+    "item": "mecha_walkers:welding_torch"
+  }
+}
