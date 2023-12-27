@@ -2,6 +2,11 @@ package fr.sixela.mechawalkers;
 
 import com.mojang.logging.LogUtils;
 import fr.sixela.mechawalkers.block.MechControlSeatBlock;
+import fr.sixela.mechawalkers.block.MechaWalkersBlocks;
+import fr.sixela.mechawalkers.client.models.CarrierGolemModel;
+import fr.sixela.mechawalkers.client.renderer.CarrierGolemRenderer;
+import fr.sixela.mechawalkers.entity.MechaWalkersEntities;
+import fr.sixela.mechawalkers.item.MechaWalkersItems;
 import fr.sixela.mechawalkers.item.WeldingTorchItem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.Registries;
@@ -16,6 +21,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
@@ -41,60 +47,6 @@ public class MechaWalkersMod
     public static final String MODID = "mecha_walkers";
     private static final Logger LOGGER = LogUtils.getLogger();
 
-
-
-    // Create a Deferred Register to hold Blocks which will all be registered under the "examplemod" namespace
-    // ----------------------- BLOCKS ----------------------- //
-    public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, MODID);
-    // Create a Deferred Register to hold Items which will all be registered under the "examplemod" namespace
-    public static final RegistryObject<Block> MECH_CONTROL_SEAT_BLOCK = BLOCKS.register("mech_control_seat",
-        () -> new MechControlSeatBlock(BlockBehaviour.Properties.copy(Blocks.PISTON).noOcclusion()));
-
-
-
-
-    // ----------------------- ITEMS ----------------------- //
-    public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, MODID);
-    // Create a Deferred Register to hold CreativeModeTabs which will all be registered under the "examplemod" namespace
-    public static final RegistryObject<Item> WELDING_TORCH = ITEMS.register("welding_torch",
-            () -> new WeldingTorchItem(new Item.Properties()
-                    .stacksTo(1)));
-    public static final RegistryObject<Item> MECH_CONTROL_SEAT_ITEM = ITEMS.register("mech_control_seat",
-            () -> new BlockItem(MECH_CONTROL_SEAT_BLOCK.get(), new Item.Properties()));
-
-
-    // ----------------------- CREATIVE MODE TABS ----------------------- //
-    public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
-
-    public static final RegistryObject<CreativeModeTab> MECHAWALKERS_TAB = CREATIVE_MODE_TABS.register("mechawalkers_tab",
-            () -> CreativeModeTab.builder()
-                    .icon(() -> WELDING_TORCH.get().getDefaultInstance())
-                    .title(Component.translatable("creativetab.mecha_walkers_tab"))
-                    .displayItems((pParameters, pOutput) -> {
-                        pOutput.accept(WELDING_TORCH.get()); //ADD ITEMS HERE
-                        pOutput.accept(MECH_CONTROL_SEAT_ITEM.get());
-                    }).build());
-
-    /*
-
-    // Creates a new Block with the id "examplemod:example_block", combining the namespace and path
-    public static final RegistryObject<Block> EXAMPLE_BLOCK = BLOCKS.register("example_block", () -> new Block(BlockBehaviour.Properties.of().mapColor(MapColor.STONE)));
-    // Creates a new BlockItem with the id "examplemod:example_block", combining the namespace and path
-    public static final RegistryObject<Item> EXAMPLE_BLOCK_ITEM = ITEMS.register("example_block", () -> new BlockItem(EXAMPLE_BLOCK.get(), new Item.Properties()));
-
-    // Creates a new food item with the id "examplemod:example_id", nutrition 1 and saturation 2
-    public static final RegistryObject<Item> EXAMPLE_ITEM = ITEMS.register("example_item", () -> new Item(new Item.Properties().food(new FoodProperties.Builder()
-            .alwaysEat().nutrition(1).saturationMod(2f).build())));
-
-    // Creates a creative tab with the id "examplemod:example_tab" for the example item, that is placed after the combat tab
-    public static final RegistryObject<CreativeModeTab> EXAMPLE_TAB = CREATIVE_MODE_TABS.register("example_tab", () -> CreativeModeTab.builder()
-            .withTabsBefore(CreativeModeTabs.COMBAT)
-            .icon(() -> EXAMPLE_ITEM.get().getDefaultInstance())
-            .displayItems((parameters, output) -> {
-                output.accept(EXAMPLE_ITEM.get()); // Add the example item to the tab. For your own tabs, this method is preferred over the event
-            }).build());
-     */
-
     public MechaWalkersMod()
     {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
@@ -102,22 +54,21 @@ public class MechaWalkersMod
         // Register the commonSetup method for modloading
         modEventBus.addListener(this::commonSetup);
 
+        //other event listeners setup
+        modEventBus.addListener(this::entityRenderers);
+        modEventBus.addListener(this::registerLayerDefinitions);
+
 
         // Register the Deferred Register to the mod event bus so blocks get registered
-        BLOCKS.register(modEventBus);
+        MechaWalkersBlocks.register(modEventBus);
         // Register the Deferred Register to the mod event bus so items get registered
-        ITEMS.register(modEventBus);
-        // Register the Deferred Register to the mod event bus so tabs get registered
-        CREATIVE_MODE_TABS.register(modEventBus);
+        MechaWalkersItems.register(modEventBus);
+        // Register entities
+        MechaWalkersEntities.register(modEventBus);
 
 
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
-
-        /*
-        // Register the item to a creative tab
-        modEventBus.addListener(this::addCreative);
-         */
 
         // Register our mod's ForgeConfigSpec so that Forge can create and load the config file for us
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.SPEC);
@@ -125,8 +76,10 @@ public class MechaWalkersMod
 
     private void commonSetup(final FMLCommonSetupEvent event)
     {
+
         // Some common setup code
-        LOGGER.info("HELLO FROM COMMON SETUP");
+        LOGGER.info("Mecha Walkers commonSetup running");
+        /*
 
         if (Config.logDirtBlock)
             LOGGER.info("DIRT BLOCK >> {}", ForgeRegistries.BLOCKS.getKey(Blocks.DIRT));
@@ -134,18 +87,19 @@ public class MechaWalkersMod
         LOGGER.info(Config.magicNumberIntroduction + Config.magicNumber);
 
         Config.items.forEach((item) -> LOGGER.info("ITEM >> {}", item.toString()));
+
+         */
+    }
+
+    public void entityRenderers(EntityRenderersEvent.RegisterRenderers event) {
+        event.registerEntityRenderer(MechaWalkersEntities.CARRIER_GOLEM.get(), CarrierGolemRenderer::new);
+    }
+
+    private void registerLayerDefinitions(EntityRenderersEvent.RegisterLayerDefinitions event) {
+        event.registerLayerDefinition(CarrierGolemModel.LAYER_LOCATION,CarrierGolemModel::createBodyLayer);
     }
 
     /*
-
-    // Add the example block item to the building blocks tab
-    private void addCreative(BuildCreativeModeTabContentsEvent event)
-    {
-        if (event.getTabKey() == CreativeModeTabs.BUILDING_BLOCKS)
-            event.accept(EXAMPLE_BLOCK_ITEM);
-    }
-
-     */
 
     // You can use SubscribeEvent and let the Event Bus discover methods to call
     @SubscribeEvent
@@ -167,4 +121,7 @@ public class MechaWalkersMod
             LOGGER.info("MINECRAFT NAME >> {}", Minecraft.getInstance().getUser().getName());
         }
     }
+
+
+     */
 }
