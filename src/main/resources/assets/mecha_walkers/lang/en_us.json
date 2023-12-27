@@ -1,5 +1,11 @@
 {
   "item.mecha_walkers.welding_torch": "Welding Torch",
   "creativetab.mecha_walkers_tab": "Mecha Walkers",
-  "block.mecha_walkers.mech_control_seat": "Mech Control Seat"
+  "block.mecha_walkers.mech_control_seat": "Mech Control Seat",
+  "block.mecha_walkers.steam_engine_mech_core": "Steam Engine Core",
+  "block.mecha_walkers.wood_mech_frame": "Wood Mech Frame",
+  "block.mecha_walkers.copper_mech_frame": "Copper Mech Frame",
+  "block.mecha_walkers.iron_mech_frame": "Iron Mech Frame",
+  "block.mecha_walkers.simple_mech_leg": "Simple Mech Leg",
+  "block.mecha_walkers.simpledrill_mech_arm": "Simple Mech Drill Arm"
 }

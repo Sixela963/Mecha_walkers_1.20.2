@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "mecha_walkers:block/wood_mech_frame"
+  }
+}

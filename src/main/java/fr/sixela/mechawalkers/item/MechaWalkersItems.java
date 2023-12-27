@@ -27,6 +27,18 @@ public class MechaWalkersItems {
     //----------------------------BLOCK ITEMS----------------------------//
     public static final RegistryObject<Item> MECH_CONTROL_SEAT_ITEM = ITEMS.register("mech_control_seat",
             () -> new BlockItem(MechaWalkersBlocks.MECH_CONTROL_SEAT_BLOCK.get(), new Item.Properties()));
+    public static final RegistryObject<Item> STEAM_ENGINE_CORE_ITEM = ITEMS.register("steam_engine_mech_core",
+            () -> new BlockItem(MechaWalkersBlocks.STEAM_ENGINE_CORE_BLOCK.get(), new Item.Properties()));
+    public static final RegistryObject<Item> WOOD_FRAME_ITEM = ITEMS.register("wood_mech_frame",
+            () -> new BlockItem(MechaWalkersBlocks.WOOD_FRAME_BLOCK.get(), new Item.Properties()));
+    public static final RegistryObject<Item> COPPER_FRAME_ITEM = ITEMS.register("copper_mech_frame",
+            () -> new BlockItem(MechaWalkersBlocks.COPPER_FRAME_BLOCK.get(), new Item.Properties()));
+    public static final RegistryObject<Item> IRON_FRAME_ITEM = ITEMS.register("iron_mech_frame",
+            () -> new BlockItem(MechaWalkersBlocks.IRON_FRAME_BLOCK.get(), new Item.Properties()));
+    public static final RegistryObject<Item> SIMPLE_LEG_ITEM = ITEMS.register("simple_mech_leg",
+            () -> new BlockItem(MechaWalkersBlocks.SIMPLE_LEG_BLOCK.get(), new Item.Properties()));
+    public static final RegistryObject<Item> SIMPLEDRILL_ARM_ITEM = ITEMS.register("simpledrill_mech_arm",
+            () -> new BlockItem(MechaWalkersBlocks.SIMPLEDRILL_ARM_BLOCK.get(), new Item.Properties()));
 
 
     public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MechaWalkersMod.MODID);
@@ -38,6 +50,12 @@ public class MechaWalkersItems {
                     .displayItems((pParameters, pOutput) -> {
                         pOutput.accept(WELDING_TORCH.get()); //ADD ITEMS HERE
                         pOutput.accept(MECH_CONTROL_SEAT_ITEM.get());
+                        pOutput.accept(STEAM_ENGINE_CORE_ITEM.get());
+                        pOutput.accept(WOOD_FRAME_ITEM.get());
+                        pOutput.accept(COPPER_FRAME_ITEM.get());
+                        pOutput.accept(IRON_FRAME_ITEM.get());
+                        pOutput.accept(SIMPLE_LEG_ITEM.get());
+                        pOutput.accept(SIMPLEDRILL_ARM_ITEM.get());
                     }).build());
 
 

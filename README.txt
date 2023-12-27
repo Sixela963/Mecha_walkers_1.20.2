@@ -1,8 +1,8 @@
 This is the Github repository for the Mecha Walkers project, a minecraft forge mod that aims to add modular mechas to the game.
 
 TODO list:
-1- Add the carrier golem into the mod --DONE!
-2- Add the hierarchy for module blocks:  (going to take forever lol)
+1- Add the carrier golem into the mod --DONE
+2- Add the hierarchy for module blocks:  (going to take forever lol) --DONE
     abstract module block,
     -abstract core block,
     --steam engine core block,
@@ -11,8 +11,8 @@ TODO list:
     --iron frame blocks,
     -abstract leg blocks,
     --basic leg blocks,
-    -abstract arm blocks
-    --basic arm blocks (ability:
+    -abstract arm blocks,
+    --simple drill arm blocks
 3- Add ability to spawn size 1 (4-high, 3-wide) entity from building the basic 4-high, 3-wide ("size 1") structure and using welding torch on core
 4- Add basic controllable mecha entity with non-modular model renderer and modular stats (BIG ONE) (no inventory for now)
 5- make renderer modular (VERY BIG ONE)
