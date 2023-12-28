@@ -13,7 +13,7 @@ TODO list:
     --basic leg blocks,
     -abstract arm blocks,
     --simple drill arm blocks
-3- Add ability to spawn size 1 (4-high, 3-wide) entity from building the basic 4-high, 3-wide ("size 1") structure and using welding torch on core
+3- Add ability to spawn size 1 (4-high, 3-wide) entity from building the basic 4-high, 3-wide ("size 1") structure and using welding torch on core --DONE
 4- Add basic controllable mecha entity with non-modular model renderer and modular stats (BIG ONE) (no inventory for now)
 5- make renderer modular (VERY BIG ONE)
 6- add mecha inventory
