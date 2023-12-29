@@ -14,6 +14,8 @@ public class MechaWalkersEntities {
 
     public static final RegistryObject<EntityType<CarrierGolem>> CARRIER_GOLEM = ENTITIES.register("carrier_golem",
             () -> EntityType.Builder.of(CarrierGolem::new, MobCategory.MISC).sized(0.9f,0.9f).fireImmune().build(MechaWalkersMod.MODID+":carrier_golem"));
+    public static final RegistryObject<EntityType<Mecha>> MECHA = ENTITIES.register("mecha",
+            () -> EntityType.Builder.of(Mecha::new, MobCategory.MISC).sized(2.9f,3.9f).build(MechaWalkersMod.MODID+":mecha"));
 
     public static void register(IEventBus eventBus) {
         ENTITIES.register(eventBus);

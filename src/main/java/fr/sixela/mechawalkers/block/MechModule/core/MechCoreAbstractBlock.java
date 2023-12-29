@@ -6,6 +6,7 @@ import fr.sixela.mechawalkers.block.MechModule.frame.MechFrameAbstractBlock;
 import fr.sixela.mechawalkers.block.MechModule.leg.MechLegAbstractBlock;
 import fr.sixela.mechawalkers.block.MechaWalkersBlocks;
 import fr.sixela.mechawalkers.entity.CarrierGolem;
+import fr.sixela.mechawalkers.entity.Mecha;
 import fr.sixela.mechawalkers.entity.MechaWalkersEntities;
 import fr.sixela.mechawalkers.item.MechaWalkersItems;
 import net.minecraft.core.BlockPos;
@@ -65,7 +66,7 @@ public abstract class MechCoreAbstractBlock extends MechModuleAbstractBlock {
         //Using BlockPatterns, try and find a size 1 mecha structure. if found, remove it and make a mecha from the appropriate modules
         BlockPattern.BlockPatternMatch patternMatch = this.getOrCreateSize1MechaPattern().find(pLevel,pPos);
         if (patternMatch != null) {
-            CarrierGolem mecha = MechaWalkersEntities.CARRIER_GOLEM.get().create(pLevel);
+            Mecha mecha = MechaWalkersEntities.MECHA.get().create(pLevel);
             if (mecha != null) {
                 BlockPos mechSpawnPos = patternMatch.getBlock(1, 3, 0).getPos();
                 clearPatternBlocks(pLevel, patternMatch);

@@ -4,7 +4,9 @@ import com.mojang.logging.LogUtils;
 import fr.sixela.mechawalkers.block.MechControlSeatBlock;
 import fr.sixela.mechawalkers.block.MechaWalkersBlocks;
 import fr.sixela.mechawalkers.client.models.CarrierGolemModel;
+import fr.sixela.mechawalkers.client.models.MechaModel;
 import fr.sixela.mechawalkers.client.renderer.CarrierGolemRenderer;
+import fr.sixela.mechawalkers.client.renderer.MechaRenderer;
 import fr.sixela.mechawalkers.entity.MechaWalkersEntities;
 import fr.sixela.mechawalkers.item.MechaWalkersItems;
 import fr.sixela.mechawalkers.item.WeldingTorchItem;
@@ -93,10 +95,12 @@ public class MechaWalkersMod
 
     public void entityRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(MechaWalkersEntities.CARRIER_GOLEM.get(), CarrierGolemRenderer::new);
+        event.registerEntityRenderer(MechaWalkersEntities.MECHA.get(), MechaRenderer::new);
     }
 
     private void registerLayerDefinitions(EntityRenderersEvent.RegisterLayerDefinitions event) {
         event.registerLayerDefinition(CarrierGolemModel.LAYER_LOCATION,CarrierGolemModel::createBodyLayer);
+        event.registerLayerDefinition(MechaModel.LAYER_LOCATION,MechaModel::createBodyLayer);
     }
 
     /*
