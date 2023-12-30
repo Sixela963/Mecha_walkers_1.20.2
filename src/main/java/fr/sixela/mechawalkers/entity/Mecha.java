@@ -4,11 +4,8 @@ package fr.sixela.mechawalkers.entity;
 import com.mojang.logging.LogUtils;
 import fr.sixela.mechawalkers.event.ModEventBusEvents;
 import fr.sixela.mechawalkers.network.MechaWalkersPacketHandler;
-import net.minecraft.client.KeyboardHandler;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.KeyboardInput;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.network.Connection;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -18,7 +15,10 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
@@ -73,6 +73,10 @@ public class Mecha extends LivingEntity {
         return 1.5f*super.getJumpPower();
     }
 
+    @Override
+    public float getEyeHeight(Pose pPose) {
+        return 3f;
+    }
 
     //Main movement code function (possibly move to specific function?)
     @Override
@@ -125,6 +129,9 @@ public class Mecha extends LivingEntity {
 
     @Override
     public void tick() {
+        super.tick();
+
+        //LOGIC(?)
         if (!this.level().isClientSide) {
             if (this.usingLeftTool) {
                 this.useLeftTool();
@@ -133,15 +140,47 @@ public class Mecha extends LivingEntity {
                 this.useRightTool();
             }
         }
-        super.tick();
+
     }
 
     protected void useLeftTool() {
-        LogUtils.getLogger().info("Using Left mecha tool!!");
+        //LogUtils.getLogger().info("Using Left mecha tool!!");
+        if (!this.isVehicle()){
+            return;
+        }
+        if (this.getControllingPassenger() == null) {
+            return;
+        }
+
+        BlockHitResult blockHitResult = getEntityPOVHitResult(this.level(), this,10d, ClipContext.Fluid.NONE);
+        if (blockHitResult.getType() != HitResult.Type.BLOCK) {
+            return;
+        }
+        LogUtils.getLogger().info("Starting:");
+        LogUtils.getLogger().info(this.getControllingPassenger().getEyePosition().toString());
+//        LogUtils.getLogger().info("Result:");
+//        LogUtils.getLogger().info(blockHitResult.getBlockPos().toString());
+        this.level().destroyBlock(blockHitResult.getBlockPos(),true);
     }
 
     protected void useRightTool() {
         LogUtils.getLogger().info("Using Right mecha tool!!");
+    }
+
+    //Copied helper function from the Item class, with minor modifications
+    protected static BlockHitResult getEntityPOVHitResult(Level pLevel, Entity pEntity, double reach, ClipContext.Fluid pFluidMode) {
+        float f = pEntity.getXRot();
+        float f1 = pEntity.getYRot();
+        Vec3 vec3 = pEntity.getEyePosition();
+        float f2 = Mth.cos(-f1 * ((float)Math.PI / 180F) - (float)Math.PI);
+        float f3 = Mth.sin(-f1 * ((float)Math.PI / 180F) - (float)Math.PI);
+        float f4 = -Mth.cos(-f * ((float)Math.PI / 180F));
+        float f5 = Mth.sin(-f * ((float)Math.PI / 180F));
+        float f6 = f3 * f4;
+        float f7 = f2 * f4;
+        double d0 = reach;
+        Vec3 vec31 = vec3.add((double)f6 * d0, (double)f5 * d0, (double)f7 * d0);
+        return pLevel.clip(new ClipContext(vec3, vec31, ClipContext.Block.OUTLINE, pFluidMode, pEntity));
     }
 
     //Untested in multiplayer. Copy-pasted from horse
