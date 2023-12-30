@@ -83,8 +83,8 @@ public class MechaModel extends EntityModel<Mecha> {
         this.HipBone.getChild("LeftArmBone").xRot = headPitch * (-(float)Math.PI / 180F);
         this.HipBone.getChild("RightArmBone").xRot = headPitch * (-(float)Math.PI / 180F);
 
-        this.HipBone.getChild("LeftLeg").xRot = Mth.cos(limbSwing * 1F) * 1F * limbSwingAmount;
-        this.HipBone.getChild("RightLeg").xRot = Mth.cos(limbSwing * 1F + (float)Math.PI) * 1F * limbSwingAmount;
+        this.HipBone.getChild("LeftLeg").xRot = Mth.cos(limbSwing * 0.5F) * 0.6F * limbSwingAmount;
+        this.HipBone.getChild("RightLeg").xRot = Mth.cos(limbSwing * 0.5F + (float)Math.PI) * 0.6F * limbSwingAmount;
 
     }
 

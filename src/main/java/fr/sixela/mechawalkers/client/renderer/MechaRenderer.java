@@ -11,7 +11,7 @@ import net.minecraft.resources.ResourceLocation;
 public class MechaRenderer extends LivingEntityRenderer<Mecha, MechaModel> {
     private static final ResourceLocation TEXTURE = new ResourceLocation(MechaWalkersMod.MODID, "textures/entity/mecha.png");
     public MechaRenderer(EntityRendererProvider.Context pContext) {
-        super(pContext, new MechaModel(pContext.bakeLayer(MechaModel.LAYER_LOCATION)), 2.2f);
+        super(pContext, new MechaModel(pContext.bakeLayer(MechaModel.LAYER_LOCATION)), 1.5f);
     }
 
     @Override

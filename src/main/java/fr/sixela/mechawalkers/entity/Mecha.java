@@ -1,7 +1,10 @@
 package fr.sixela.mechawalkers.entity;
 
 
+import com.mojang.logging.LogUtils;
+import fr.sixela.mechawalkers.event.ModEventBusEvents;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
@@ -25,11 +28,26 @@ The main Mecha class
  */
 public class Mecha extends LivingEntity {
 
-    private static final float yRotSpeed = 1f; //degree/tick
-    private static final float xRotSpeed = 1f; //degree/tick
+    private static final float yRotSpeed = 4f; //degree/tick
+    private static final float xRotSpeed = 6f; //degree/tick
+
+    private boolean usingLeftTool;
+    private boolean usingRightTool;
+
+
     protected Mecha(EntityType<? extends LivingEntity> pEntityType, Level pLevel) {
         super(pEntityType, pLevel);
         this.setMaxUpStep(1.6F);
+    }
+
+    @Override
+    public boolean canCollideWith(Entity pEntity) {
+        return super.canCollideWith(pEntity);
+    }
+
+    @Override
+    public boolean canBeCollidedWith() {
+        return true;
     }
 
     public static AttributeSupplier setAttributes() {
@@ -44,60 +62,99 @@ public class Mecha extends LivingEntity {
                 .build();
     }
 
+    //To be replaced by module-specific functions
     @Override
     protected float getJumpPower() {
         return 1.5f*super.getJumpPower();
     }
 
+
+    //Main movement code function (possibly move to specific function?)
     @Override
     protected void tickRidden(Player pPlayer, Vec3 pTravelVector) {
+
+        //MOVEMENT
         super.tickRidden(pPlayer, pTravelVector);
         Vec2 riddenRotation = this.getRiddenRotation(pPlayer);
         float newYRot = 0f;
         if (Math.abs(riddenRotation.y-this.getYRot()) > this.yRotSpeed) {
-            newYRot = this.getYRot() + Math.signum(riddenRotation.y-this.getYRot())*this.yRotSpeed;
+            //This part is annoying
+            float deltaYRot = this.yRotSpeed*Math.signum(Mth.degreesDifference(this.getYRot(),riddenRotation.y));
+
+            newYRot = this.getYRot() + deltaYRot;
+
         }else {
             newYRot = riddenRotation.y;
         }
+        newYRot = Mth.wrapDegrees(newYRot);
+
+
         float newXRot = 0f;
         if (Math.abs(riddenRotation.x-this.getXRot()) > this.xRotSpeed) {
-            newXRot = this.getXRot() + Math.signum(riddenRotation.x-this.getYRot())*this.xRotSpeed;
+            newXRot = this.getXRot() + Math.signum(riddenRotation.x-this.getXRot())*this.xRotSpeed;
         }else {
             newXRot = riddenRotation.x;
         }
 
         this.setRot(newYRot,newXRot);
-//        this.yRotO = this.yBodyRot = this.yHeadRot = this.getYRot();
         this.yBodyRot = this.yHeadRot = this.getYRot();
+//        this.yBodyRot = this.yHeadRot = this.getYRot();
+
+        //PLAYER INPUT
         if (this.isControlledByLocalInstance()) {
             if (pPlayer instanceof LocalPlayer){
                 this.setJumping(((LocalPlayer) pPlayer).input.jumping);
+                this.usingLeftTool = ModEventBusEvents.KEYMAP_TOOL_LEFT.get().isDown();
             }
         }
     }
+
+    @Override
+    public void tick() {
+        if (this.usingLeftTool) {
+            this.useLeftTool();
+        }
+        if (this.usingRightTool) {
+            this.useRightTool();
+        }
+        super.tick();
+    }
+
+    protected void useLeftTool() {
+        LogUtils.getLogger().info("Using Left mecha tool!!");
+    }
+
+    protected void useRightTool() {
+        LogUtils.getLogger().info("Using Right mecha tool!!");
+    }
+
+    //Untested in multiplayer. Copy-pasted from horse
     @Override
     public InteractionResult interact(Player pPlayer, InteractionHand pHand) {
-        //Code copied from Boat + horse
-        if (!this.level().isClientSide) {
-            boolean startedRiding = pPlayer.startRiding(this);
-            if (startedRiding) {
-                pPlayer.setXRot(this.getXRot());
+        if (pPlayer.isSecondaryUseActive()) {
+            return InteractionResult.PASS;
+        } else if (!this.isVehicle()) {
+            if (!this.level().isClientSide) {
                 pPlayer.setYRot(this.getYRot());
+                pPlayer.setXRot(this.getXRot());
+                return pPlayer.startRiding(this) ? InteractionResult.CONSUME : InteractionResult.PASS;
+            } else {
+                return InteractionResult.SUCCESS;
             }
-            return startedRiding ? InteractionResult.CONSUME : InteractionResult.PASS;
         } else {
-            return InteractionResult.SUCCESS;
+            return InteractionResult.PASS;
         }
     }
 
     protected Vec2 getRiddenRotation(LivingEntity pEntity) {
 //        return this.getRotationVector();
-        return new Vec2(pEntity.getXRot(), pEntity.getYRot());
+        return new Vec2(pEntity.getXRot(), Mth.wrapDegrees(pEntity.getYRot()));
+//        return new Vec2(pEntity.getXRot(), Mth.wrapDegrees(pEntity.getYRot()));
     }
 
 
     protected Vector3f getPassengerAttachmentPoint(Entity pEntity, EntityDimensions pDimensions, float pScale) {
-        return new Vector3f(0f, 2f, -0.2f);
+        return new Vector3f(0f, 2f, -0.3f);
     }
 
     @Override
@@ -109,7 +166,7 @@ public class Mecha extends LivingEntity {
 
     @Override
     protected Vec3 getRiddenInput(Player pPlayer, Vec3 pTravelVector) {
-        return new Vec3(pPlayer.xxa, 0d, pPlayer.zza);
+        return new Vec3(pPlayer.xxa*0.5f, 0d, pPlayer.zza);
         //return super.getRiddenInput(pPlayer, pTravelVector);
     }
 
@@ -127,7 +184,6 @@ public class Mecha extends LivingEntity {
         if (pPassenger instanceof LivingEntity) {
             ((LivingEntity)pPassenger).yBodyRot = this.yBodyRot;
         }
-
     }
 
     @Nullable
@@ -142,7 +198,13 @@ public class Mecha extends LivingEntity {
         }
     }
 
+    //Function overriden to remove the behaviour where the mech would turn toward its direction
+    @Override
+    protected float tickHeadTurn(float pYRot, float pAnimStep) {
+        return pAnimStep;
+    }
 
+    //Will later be replaced by a function dependent on modules
     @Override
     public boolean causeFallDamage(float pFallDistance, float pMultiplier, DamageSource pSource) {
         return false;
