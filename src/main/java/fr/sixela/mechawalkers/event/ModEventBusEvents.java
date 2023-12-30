@@ -28,7 +28,7 @@ public class ModEventBusEvents {
 
     @OnlyIn(Dist.CLIENT)
     public static final Lazy<KeyMapping> KEYMAP_TOOL_LEFT = Lazy.of(()-> {
-        return new KeyMapping("key.mechawalkers.tool.left",
+        return new KeyMapping("key.mechawalkers.toolleft",
                 InputConstants.Type.MOUSE,
                 GLFW.GLFW_MOUSE_BUTTON_1,
                 "key.categories.misc"
@@ -36,7 +36,7 @@ public class ModEventBusEvents {
     });
     @OnlyIn(Dist.CLIENT)
     public static final Lazy<KeyMapping> KEYMAP_TOOL_RIGHT = Lazy.of(()-> {
-        return new KeyMapping("key.mechawalkers.tool.left",
+        return new KeyMapping("key.mechawalkers.toolright",
                 InputConstants.Type.MOUSE,
                 GLFW.GLFW_MOUSE_BUTTON_2,
                 "key.categories.misc"

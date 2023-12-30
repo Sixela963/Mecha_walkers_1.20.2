@@ -10,6 +10,7 @@ import fr.sixela.mechawalkers.client.renderer.MechaRenderer;
 import fr.sixela.mechawalkers.entity.MechaWalkersEntities;
 import fr.sixela.mechawalkers.item.MechaWalkersItems;
 import fr.sixela.mechawalkers.item.WeldingTorchItem;
+import fr.sixela.mechawalkers.network.MechaWalkersPacketHandler;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
@@ -67,6 +68,8 @@ public class MechaWalkersMod
         MechaWalkersItems.register(modEventBus);
         // Register entities
         MechaWalkersEntities.register(modEventBus);
+
+        MechaWalkersPacketHandler.registerMessages();
 
 
         // Register ourselves for server and other game events we are interested in

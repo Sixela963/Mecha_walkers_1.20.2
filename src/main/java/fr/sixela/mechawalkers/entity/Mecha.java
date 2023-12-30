@@ -3,7 +3,12 @@ package fr.sixela.mechawalkers.entity;
 
 import com.mojang.logging.LogUtils;
 import fr.sixela.mechawalkers.event.ModEventBusEvents;
+import fr.sixela.mechawalkers.network.MechaWalkersPacketHandler;
+import net.minecraft.client.KeyboardHandler;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.KeyboardInput;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.network.Connection;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -104,18 +109,29 @@ public class Mecha extends LivingEntity {
         if (this.isControlledByLocalInstance()) {
             if (pPlayer instanceof LocalPlayer){
                 this.setJumping(((LocalPlayer) pPlayer).input.jumping);
-                this.usingLeftTool = ModEventBusEvents.KEYMAP_TOOL_LEFT.get().isDown();
+                MechaWalkersPacketHandler.INSTANCE.send(new MechaWalkersPacketHandler.ServerboundMechaToolPacket(ModEventBusEvents.KEYMAP_TOOL_LEFT.get().isDown(),
+                                ModEventBusEvents.KEYMAP_TOOL_RIGHT.get().isDown()),
+                        Minecraft.getInstance().getConnection().getConnection());
+//                this.usingLeftTool = ModEventBusEvents.KEYMAP_TOOL_LEFT.get().isDown();
+//                this.usingRightTool =ModEventBusEvents.KEYMAP_TOOL_RIGHT.get().isDown();
             }
         }
     }
 
+    public void setUsingTools(boolean left, boolean right) {
+        this.usingLeftTool = left;
+        this.usingRightTool = right;
+    }
+
     @Override
     public void tick() {
-        if (this.usingLeftTool) {
-            this.useLeftTool();
-        }
-        if (this.usingRightTool) {
-            this.useRightTool();
+        if (!this.level().isClientSide) {
+            if (this.usingLeftTool) {
+                this.useLeftTool();
+            }
+            if (this.usingRightTool) {
+                this.useRightTool();
+            }
         }
         super.tick();
     }
