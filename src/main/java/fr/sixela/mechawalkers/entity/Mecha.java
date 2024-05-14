@@ -2,10 +2,19 @@ package fr.sixela.mechawalkers.entity;
 
 
 import com.mojang.logging.LogUtils;
+import fr.sixela.mechawalkers.block.MechModule.arm.MechArmAbstractBlock;
+import fr.sixela.mechawalkers.block.MechModule.core.MechCoreAbstractBlock;
+import fr.sixela.mechawalkers.block.MechModule.frame.MechFrameAbstractBlock;
+import fr.sixela.mechawalkers.block.MechModule.leg.MechLegAbstractBlock;
 import fr.sixela.mechawalkers.event.ModEventBusEvents;
+import fr.sixela.mechawalkers.mechModule.arm.MechArmAbstractModule;
+import fr.sixela.mechawalkers.mechModule.core.MechCoreAbstractModule;
+import fr.sixela.mechawalkers.mechModule.frame.MechFrameAbstractModule;
+import fr.sixela.mechawalkers.mechModule.leg.LegAbstractModule;
 import fr.sixela.mechawalkers.network.MechaWalkersPacketHandler;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -17,6 +26,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec2;
@@ -37,12 +47,74 @@ public class Mecha extends LivingEntity {
     private static final float xRotSpeed = 6f; //degree/tick
 
     private boolean usingLeftTool;
+    private int leftToolProgress = 0;
+    private float leftToolDigSpeed = 10f;
     private boolean usingRightTool;
+
+    protected ItemStack coreItemStack;
+    protected MechCoreAbstractModule coreModule;
+    protected ItemStack frameItemStack;
+    protected MechFrameAbstractModule frameModule;
+    protected ItemStack leftToolItemStack;
+    protected MechArmAbstractModule leftArmModule;
+    protected ItemStack rightToolItemStack;
+    protected MechArmAbstractModule rightArmModule;
+    protected ItemStack legsItemStack;
+    protected LegAbstractModule legModule;
 
 
     protected Mecha(EntityType<? extends LivingEntity> pEntityType, Level pLevel) {
         super(pEntityType, pLevel);
-        this.setMaxUpStep(1.6F);
+        this.setMaxUpStep(0.5F);
+        this.coreItemStack = ItemStack.EMPTY;
+        this.frameItemStack = ItemStack.EMPTY;
+        this.legsItemStack = ItemStack.EMPTY;
+        this.leftToolItemStack = ItemStack.EMPTY;
+        this.rightToolItemStack = ItemStack.EMPTY;
+    }
+
+    public void setModules (ItemStack coreStack,ItemStack frameStack,ItemStack legStack,ItemStack leftToolStack,ItemStack rightToolStack) {
+        this.coreItemStack = coreStack;
+        this.frameItemStack = frameStack;
+        this.legsItemStack = legStack;
+        this.leftToolItemStack = leftToolStack;
+        this.rightToolItemStack = rightToolStack;
+
+        Block coreBlock = Block.byItem(this.coreItemStack.getItem());
+        Block frameBlock = Block.byItem(this.frameItemStack.getItem());
+        Block legsBlock = Block.byItem(this.legsItemStack.getItem());
+        Block leftToolBlock = Block.byItem(this.leftToolItemStack.getItem());
+        Block rightToolBlock = Block.byItem(this.rightToolItemStack.getItem());
+
+        if (coreBlock instanceof MechCoreAbstractBlock) {
+            this.coreModule = ((MechCoreAbstractBlock)coreBlock).getModule();
+        } else {
+            LogUtils.getLogger().info("Invalid Core!");
+        }
+        if (frameBlock instanceof MechFrameAbstractBlock) {
+            this.frameModule = ((MechFrameAbstractBlock)frameBlock).getModule();
+        } else {
+            LogUtils.getLogger().info("Invalid frame!");
+        }
+        if (legsBlock instanceof MechLegAbstractBlock) {
+            this.legModule = ((MechLegAbstractBlock)legsBlock).getModule();
+        } else {
+            LogUtils.getLogger().info("Invalid legs!");
+        }
+        if (leftToolBlock instanceof MechArmAbstractBlock) {
+            this.leftArmModule = ((MechArmAbstractBlock)leftToolBlock).getModule();
+        } else {
+            LogUtils.getLogger().info("Invalid left arm!");
+        }
+        if (rightToolBlock instanceof MechArmAbstractBlock) {
+            this.rightArmModule = ((MechArmAbstractBlock)rightToolBlock).getModule();
+        } else {
+            LogUtils.getLogger().info("Invalid right arm!");
+        }
+
+
+
+        this.updateStats();
     }
 
     @Override
@@ -56,21 +128,35 @@ public class Mecha extends LivingEntity {
     }
 
     public static AttributeSupplier setAttributes() {
+        // Base default values
         return LivingEntity.createLivingAttributes()
-                .add(Attributes.MAX_HEALTH, 50.0D)
+                .add(Attributes.MAX_HEALTH, 1.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.1f)
-                .add(Attributes.ARMOR, 5d)
-                .add(Attributes.ARMOR_TOUGHNESS, 5d)
-                .add(Attributes.ATTACK_DAMAGE, 1.0f)
-                .add(Attributes.ATTACK_SPEED,1.0f)
+                .add(Attributes.ARMOR, 0d)
+                .add(Attributes.ARMOR_TOUGHNESS, 0d)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 1.0f)
+                .add(Attributes.JUMP_STRENGTH,0.0f)
                 .build();
+    }
+
+    public void updateStats() {
+        this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(this.frameModule.getMaxHealth());
+        this.getAttribute(Attributes.ARMOR).setBaseValue(this.frameModule.getArmor());
+        this.getAttribute(Attributes.ARMOR_TOUGHNESS).setBaseValue(this.frameModule.getArmorToughness());
+
+        //Speed formula: 0.05f * LegSpeedMult * (CoreMovementPower/FrameMass) (0.05f is to convert from blocks/s to blocks/tick)
+        this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.05f*this.legModule.getSpeedMultiplier()*(this.coreModule.getMovementPower()/this.frameModule.getMass()));
+        this.getAttribute(Attributes.JUMP_STRENGTH).setBaseValue(this.legModule.getJumpPower());
+        this.setMaxUpStep(this.legModule.getStep());
     }
 
     //To be replaced by module-specific functions
     @Override
     protected float getJumpPower() {
-        return 1.5f*super.getJumpPower();
+        //wtf is wrong with this function
+        //for some reason I can't correctly access the fields and methods from the instanciated entity when I am in one of those overridden protected functions. this is very annoying
+        //return (float)this.getAttributeValue(Attributes.JUMP_STRENGTH) * super.getJumpPower();
+        return this.legModule.getJumpPower() * super.getJumpPower();
     }
 
     @Override
@@ -135,12 +221,13 @@ public class Mecha extends LivingEntity {
         if (!this.level().isClientSide) {
             if (this.usingLeftTool) {
                 this.useLeftTool();
+            }else{
+                this.leftToolProgress=0;
             }
             if (this.usingRightTool) {
                 this.useRightTool();
             }
         }
-
     }
 
     protected void useLeftTool() {
@@ -160,11 +247,30 @@ public class Mecha extends LivingEntity {
         LogUtils.getLogger().info(this.getControllingPassenger().getEyePosition().toString());
 //        LogUtils.getLogger().info("Result:");
 //        LogUtils.getLogger().info(blockHitResult.getBlockPos().toString());
-        this.level().destroyBlock(blockHitResult.getBlockPos(),true);
+        this.leftToolProgress++;
+        float breakSpeed = this.level().getBlockState(blockHitResult.getBlockPos()).getDestroySpeed(this.level(),blockHitResult.getBlockPos());
+        int breakTicksRequired = (int)(30f*breakSpeed/this.leftToolDigSpeed);
+        int progress = (int)(10f*this.leftToolProgress/breakTicksRequired);
+        level().destroyBlockProgress(this.getId(),blockHitResult.getBlockPos(),progress);
+        if (this.leftToolProgress>=breakTicksRequired) {
+            this.leftToolProgress=0;
+            this.level().destroyBlock(blockHitResult.getBlockPos(),true);
+        }
     }
 
     protected void useRightTool() {
         LogUtils.getLogger().info("Using Right mecha tool!!");
+        LogUtils.getLogger().info(this.coreItemStack.getItem().toString());
+        LogUtils.getLogger().info(String.valueOf(this.coreModule==null));
+        LogUtils.getLogger().info(this.frameItemStack.getItem().toString());
+        LogUtils.getLogger().info(String.valueOf(this.frameModule==null));
+        LogUtils.getLogger().info(this.legsItemStack.getItem().toString());
+        LogUtils.getLogger().info(String.valueOf(this.legModule==null));
+        LogUtils.getLogger().info(String.valueOf(this.legModule.getJumpPower()));
+        LogUtils.getLogger().info(this.leftToolItemStack.getItem().toString());
+        LogUtils.getLogger().info(String.valueOf(this.leftArmModule==null));
+        LogUtils.getLogger().info(this.rightToolItemStack.getItem().toString());
+        LogUtils.getLogger().info(String.valueOf(this.rightArmModule==null));
     }
 
     //Copied helper function from the Item class, with minor modifications
@@ -200,7 +306,10 @@ public class Mecha extends LivingEntity {
             return InteractionResult.PASS;
         }
     }
-
+    @Override
+    public boolean isPushable() {
+        return false;
+    }
     protected Vec2 getRiddenRotation(LivingEntity pEntity) {
 //        return this.getRotationVector();
         return new Vec2(pEntity.getXRot(), Mth.wrapDegrees(pEntity.getYRot()));
@@ -241,6 +350,11 @@ public class Mecha extends LivingEntity {
         }
     }
 
+    @Override
+    public Vec3 getDismountLocationForPassenger(LivingEntity pPassenger) {
+        return this.position();
+    }
+
     @Nullable
     @Override
     public LivingEntity getControllingPassenger() {
@@ -251,6 +365,25 @@ public class Mecha extends LivingEntity {
         else {
             return null;
         }
+    }
+
+    //NBT save data
+    public void addAdditionalSaveData(CompoundTag pCompound) {
+        super.addAdditionalSaveData(pCompound);
+        pCompound.put("MechCoreBlock", this.coreItemStack.save(new CompoundTag()));
+        pCompound.put("MechFrameBlock", this.frameItemStack.save(new CompoundTag()));
+        pCompound.put("MechLegBlock", this.legsItemStack.save(new CompoundTag()));
+        pCompound.put("LeftToolBlock", this.leftToolItemStack.save(new CompoundTag()));
+        pCompound.put("RightToolBlock", this.rightToolItemStack.save(new CompoundTag()));
+    }
+    public void readAdditionalSaveData(CompoundTag pCompound) {
+        super.readAdditionalSaveData(pCompound);
+        this.setModules(
+                ItemStack.of(pCompound.getCompound("MechCoreBlock")),
+                ItemStack.of(pCompound.getCompound("MechFrameBlock")),
+                ItemStack.of(pCompound.getCompound("MechLegBlock")),
+                ItemStack.of(pCompound.getCompound("LeftToolBlock")),
+                ItemStack.of(pCompound.getCompound("RightToolBlock")));
     }
 
     //Function overriden to remove the behaviour where the mech would turn toward its direction
@@ -264,8 +397,6 @@ public class Mecha extends LivingEntity {
     public boolean causeFallDamage(float pFallDistance, float pMultiplier, DamageSource pSource) {
         return false;
     }
-
-
 
     @Override
     public Iterable<ItemStack> getArmorSlots() {

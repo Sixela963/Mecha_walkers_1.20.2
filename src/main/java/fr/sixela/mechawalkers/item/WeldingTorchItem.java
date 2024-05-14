@@ -1,5 +1,6 @@
 package fr.sixela.mechawalkers.item;
 
+import fr.sixela.mechawalkers.entity.Mecha;
 import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -147,7 +148,7 @@ public class WeldingTorchItem extends Item {
 
 
         //Repair golems
-        if (pInteractionTarget instanceof AbstractGolem)
+        if ((pInteractionTarget instanceof AbstractGolem)|(pInteractionTarget instanceof Mecha))
         {
             float healthBefore = pInteractionTarget.getHealth();
             pInteractionTarget.heal(golemHealAmount);

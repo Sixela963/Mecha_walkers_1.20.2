@@ -1,5 +1,6 @@
 package fr.sixela.mechawalkers.block.MechModule.core;
 
+import com.mojang.logging.LogUtils;
 import fr.sixela.mechawalkers.block.MechModule.MechModuleAbstractBlock;
 import fr.sixela.mechawalkers.block.MechModule.arm.MechArmAbstractBlock;
 import fr.sixela.mechawalkers.block.MechModule.frame.MechFrameAbstractBlock;
@@ -25,6 +26,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class MechCoreAbstractBlock extends MechModuleAbstractBlock {
+
     public MechCoreAbstractBlock(Properties pProperties) {
         super(pProperties);
     }
@@ -66,8 +68,22 @@ public abstract class MechCoreAbstractBlock extends MechModuleAbstractBlock {
         //Using BlockPatterns, try and find a size 1 mecha structure. if found, remove it and make a mecha from the appropriate modules
         BlockPattern.BlockPatternMatch patternMatch = this.getOrCreateSize1MechaPattern().find(pLevel,pPos);
         if (patternMatch != null) {
+            /*LogUtils.getLogger().info("Recognized mecha pattern");
+            LogUtils.getLogger().info(patternMatch.getBlock(1, 2, 0).getState().getBlock().getDescriptionId()); //frame
+            LogUtils.getLogger().info(patternMatch.getBlock(1, 1, 0).getState().getBlock().getDescriptionId()); //core
+            LogUtils.getLogger().info(patternMatch.getBlock(1, 0, 0).getState().getBlock().getDescriptionId()); //seat
+            LogUtils.getLogger().info(patternMatch.getBlock(0, 1, 0).getState().getBlock().getDescriptionId()); //tool 1
+            LogUtils.getLogger().info(patternMatch.getBlock(2, 1, 0).getState().getBlock().getDescriptionId()); //tool 2
+            LogUtils.getLogger().info(patternMatch.getBlock(0, 3, 0).getState().getBlock().getDescriptionId()); //foot 1
+            LogUtils.getLogger().info(patternMatch.getBlock(2, 3, 0).getState().getBlock().getDescriptionId()); //foot 2*/
             Mecha mecha = MechaWalkersEntities.MECHA.get().create(pLevel);
             if (mecha != null) {
+                mecha.setModules(
+                        patternMatch.getBlock(1, 1, 0).getState().getBlock().asItem().getDefaultInstance(),
+                        patternMatch.getBlock(1, 2, 0).getState().getBlock().asItem().getDefaultInstance(),
+                        patternMatch.getBlock(0, 3, 0).getState().getBlock().asItem().getDefaultInstance(),
+                        patternMatch.getBlock(0, 1, 0).getState().getBlock().asItem().getDefaultInstance(),
+                        patternMatch.getBlock(2, 1, 0).getState().getBlock().asItem().getDefaultInstance());
                 BlockPos mechSpawnPos = patternMatch.getBlock(1, 3, 0).getPos();
                 clearPatternBlocks(pLevel, patternMatch);
                 mecha.moveTo(mechSpawnPos,0,0);
