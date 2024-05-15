@@ -15,6 +15,9 @@ import fr.sixela.mechawalkers.network.MechaWalkersPacketHandler;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -43,82 +46,108 @@ The main Mecha class
  */
 public class Mecha extends LivingEntity {
 
-    private static final float yRotSpeed = 4f; //degree/tick
+    private float yRotSpeed = 4f; //degree/tick
     private static final float xRotSpeed = 6f; //degree/tick
 
     private boolean usingLeftTool;
-    private int leftToolProgress = 0;
-    private float leftToolDigSpeed = 10f;
+    private boolean wasUsingLeftTool;
     private boolean usingRightTool;
+    private boolean wasUsingRightTool;
 
-    protected ItemStack coreItemStack;
+    private static final EntityDataAccessor<ItemStack> DATA_CORE_ITEM = SynchedEntityData.defineId(Mecha.class, EntityDataSerializers.ITEM_STACK);
+    private static final EntityDataAccessor<ItemStack> DATA_FRAME_ITEM = SynchedEntityData.defineId(Mecha.class, EntityDataSerializers.ITEM_STACK);
+    private static final EntityDataAccessor<ItemStack> DATA_LEGS_ITEM = SynchedEntityData.defineId(Mecha.class, EntityDataSerializers.ITEM_STACK);
+    private static final EntityDataAccessor<ItemStack> DATA_LEFT_TOOL_ITEM = SynchedEntityData.defineId(Mecha.class, EntityDataSerializers.ITEM_STACK);
+    private static final EntityDataAccessor<ItemStack> DATA_RIGHT_TOOL_ITEM = SynchedEntityData.defineId(Mecha.class, EntityDataSerializers.ITEM_STACK);
     protected MechCoreAbstractModule coreModule;
-    protected ItemStack frameItemStack;
     protected MechFrameAbstractModule frameModule;
-    protected ItemStack leftToolItemStack;
-    protected MechArmAbstractModule leftArmModule;
-    protected ItemStack rightToolItemStack;
-    protected MechArmAbstractModule rightArmModule;
-    protected ItemStack legsItemStack;
     protected LegAbstractModule legModule;
-
+    protected MechArmAbstractModule leftArmModule;
+    protected MechArmAbstractModule rightArmModule;
 
     protected Mecha(EntityType<? extends LivingEntity> pEntityType, Level pLevel) {
         super(pEntityType, pLevel);
         this.setMaxUpStep(0.5F);
-        this.coreItemStack = ItemStack.EMPTY;
-        this.frameItemStack = ItemStack.EMPTY;
-        this.legsItemStack = ItemStack.EMPTY;
-        this.leftToolItemStack = ItemStack.EMPTY;
-        this.rightToolItemStack = ItemStack.EMPTY;
     }
 
-    public void setModules (ItemStack coreStack,ItemStack frameStack,ItemStack legStack,ItemStack leftToolStack,ItemStack rightToolStack) {
-        this.coreItemStack = coreStack;
-        this.frameItemStack = frameStack;
-        this.legsItemStack = legStack;
-        this.leftToolItemStack = leftToolStack;
-        this.rightToolItemStack = rightToolStack;
+    @Override
+    protected void defineSynchedData() {
+        this.getEntityData().define(DATA_CORE_ITEM,ItemStack.EMPTY);
+        this.getEntityData().define(DATA_FRAME_ITEM,ItemStack.EMPTY);
+        this.getEntityData().define(DATA_LEGS_ITEM,ItemStack.EMPTY);
+        this.getEntityData().define(DATA_LEFT_TOOL_ITEM,ItemStack.EMPTY);
+        this.getEntityData().define(DATA_RIGHT_TOOL_ITEM,ItemStack.EMPTY);
+        super.defineSynchedData();
+    }
 
-        Block coreBlock = Block.byItem(this.coreItemStack.getItem());
-        Block frameBlock = Block.byItem(this.frameItemStack.getItem());
-        Block legsBlock = Block.byItem(this.legsItemStack.getItem());
-        Block leftToolBlock = Block.byItem(this.leftToolItemStack.getItem());
-        Block rightToolBlock = Block.byItem(this.rightToolItemStack.getItem());
+    @Override
+    public void onSyncedDataUpdated(EntityDataAccessor<?> pKey) {
+        super.onSyncedDataUpdated(pKey);
+        if (DATA_CORE_ITEM.equals(pKey)||DATA_FRAME_ITEM.equals(pKey)||DATA_LEGS_ITEM.equals(pKey)||DATA_LEFT_TOOL_ITEM.equals(pKey)||DATA_RIGHT_TOOL_ITEM.equals(pKey)){
+            //LogUtils.getLogger().info("Mecha specific data synced");
+            this.updateModulesFromItems();
+        }
+    }
+
+    public void setModuleItems(ItemStack coreStack, ItemStack frameStack, ItemStack legStack, ItemStack leftToolStack, ItemStack rightToolStack) {
+        //LogUtils.getLogger().info("setting module items");
+        this.getEntityData().set(DATA_CORE_ITEM,coreStack);
+        this.getEntityData().set(DATA_FRAME_ITEM,frameStack);
+        this.getEntityData().set(DATA_LEGS_ITEM,legStack);
+        this.getEntityData().set(DATA_LEFT_TOOL_ITEM,leftToolStack);
+        this.getEntityData().set(DATA_RIGHT_TOOL_ITEM,rightToolStack);
+        this.updateModulesFromItems();
+    }
+
+    public void updateModulesFromItems() {
+        //LogUtils.getLogger().info("updating module objects");
+        Block coreBlock = Block.byItem(this.getEntityData().get(DATA_CORE_ITEM).getItem());
+        Block frameBlock = Block.byItem(this.getEntityData().get(DATA_FRAME_ITEM).getItem());
+        Block legsBlock = Block.byItem(this.getEntityData().get(DATA_LEGS_ITEM).getItem());
+        Block leftToolBlock = Block.byItem(this.getEntityData().get(DATA_LEFT_TOOL_ITEM).getItem());
+        Block rightToolBlock = Block.byItem(this.getEntityData().get(DATA_RIGHT_TOOL_ITEM).getItem());
 
         if (coreBlock instanceof MechCoreAbstractBlock) {
             this.coreModule = ((MechCoreAbstractBlock)coreBlock).getModule();
+            this.coreModule.setMechaEntity(this);
         } else {
-            LogUtils.getLogger().info("Invalid Core!");
+            //LogUtils.getLogger().info("Invalid Core!");
+            return;
         }
         if (frameBlock instanceof MechFrameAbstractBlock) {
             this.frameModule = ((MechFrameAbstractBlock)frameBlock).getModule();
+            this.frameModule.setMechaEntity(this);
         } else {
-            LogUtils.getLogger().info("Invalid frame!");
+            //LogUtils.getLogger().info("Invalid frame!");
+            return;
         }
         if (legsBlock instanceof MechLegAbstractBlock) {
             this.legModule = ((MechLegAbstractBlock)legsBlock).getModule();
+            this.legModule.setMechaEntity(this);
         } else {
-            LogUtils.getLogger().info("Invalid legs!");
+            //LogUtils.getLogger().info("Invalid legs!");
+            return;
         }
         if (leftToolBlock instanceof MechArmAbstractBlock) {
             this.leftArmModule = ((MechArmAbstractBlock)leftToolBlock).getModule();
+            this.leftArmModule.setMechaEntity(this);
         } else {
-            LogUtils.getLogger().info("Invalid left arm!");
+            //LogUtils.getLogger().info("Invalid left arm!");
+            return;
         }
         if (rightToolBlock instanceof MechArmAbstractBlock) {
             this.rightArmModule = ((MechArmAbstractBlock)rightToolBlock).getModule();
+            this.rightArmModule.setMechaEntity(this);
         } else {
-            LogUtils.getLogger().info("Invalid right arm!");
+            //LogUtils.getLogger().info("Invalid right arm!");
+            return;
         }
-
-
 
         this.updateStats();
     }
 
     @Override
-    public boolean canCollideWith(Entity pEntity) {
+    public boolean canCollideWith(@NotNull Entity pEntity) {
         return super.canCollideWith(pEntity);
     }
 
@@ -147,13 +176,15 @@ public class Mecha extends LivingEntity {
         //Speed formula: 0.05f * LegSpeedMult * (CoreMovementPower/FrameMass) (0.05f is to convert from blocks/s to blocks/tick)
         this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.05f*this.legModule.getSpeedMultiplier()*(this.coreModule.getMovementPower()/this.frameModule.getMass()));
         this.getAttribute(Attributes.JUMP_STRENGTH).setBaseValue(this.legModule.getJumpPower());
+
+        this.yRotSpeed = this.legModule.getLegTurnSpeed();
         this.setMaxUpStep(this.legModule.getStep());
     }
 
     //To be replaced by module-specific functions
     @Override
     protected float getJumpPower() {
-        //wtf is wrong with this function
+        //something is wrong with this function
         //for some reason I can't correctly access the fields and methods from the instanciated entity when I am in one of those overridden protected functions. this is very annoying
         //return (float)this.getAttributeValue(Attributes.JUMP_STRENGTH) * super.getJumpPower();
         return this.legModule.getJumpPower() * super.getJumpPower();
@@ -217,76 +248,33 @@ public class Mecha extends LivingEntity {
     public void tick() {
         super.tick();
 
+        //ticking modules
+        this.coreModule.tick();
+        this.frameModule.tick();
+        this.legModule.tick();
+        this.leftArmModule.tick();
+        this.rightArmModule.tick();
+
         //LOGIC(?)
         if (!this.level().isClientSide) {
-            if (this.usingLeftTool) {
-                this.useLeftTool();
-            }else{
-                this.leftToolProgress=0;
+            if (!this.wasUsingLeftTool && this.usingLeftTool) {
+                this.leftArmModule.startUsing();
+            } else if (this.wasUsingLeftTool && this.usingLeftTool) {
+                this.leftArmModule.use();
+            } else if (this.wasUsingLeftTool && !this.usingLeftTool) {
+                this.leftArmModule.stopUsing();
             }
-            if (this.usingRightTool) {
-                this.useRightTool();
+            this.wasUsingLeftTool = this.usingLeftTool;
+
+            if (!this.wasUsingRightTool && this.usingRightTool) {
+                this.rightArmModule.startUsing();
+            } else if (this.wasUsingRightTool && this.usingRightTool) {
+                this.rightArmModule.use();
+            } else if (this.wasUsingRightTool && !this.usingRightTool) {
+                this.rightArmModule.stopUsing();
             }
+            this.wasUsingRightTool = this.usingRightTool;
         }
-    }
-
-    protected void useLeftTool() {
-        //LogUtils.getLogger().info("Using Left mecha tool!!");
-        if (!this.isVehicle()){
-            return;
-        }
-        if (this.getControllingPassenger() == null) {
-            return;
-        }
-
-        BlockHitResult blockHitResult = getEntityPOVHitResult(this.level(), this,10d, ClipContext.Fluid.NONE);
-        if (blockHitResult.getType() != HitResult.Type.BLOCK) {
-            return;
-        }
-        LogUtils.getLogger().info("Starting:");
-        LogUtils.getLogger().info(this.getControllingPassenger().getEyePosition().toString());
-//        LogUtils.getLogger().info("Result:");
-//        LogUtils.getLogger().info(blockHitResult.getBlockPos().toString());
-        this.leftToolProgress++;
-        float breakSpeed = this.level().getBlockState(blockHitResult.getBlockPos()).getDestroySpeed(this.level(),blockHitResult.getBlockPos());
-        int breakTicksRequired = (int)(30f*breakSpeed/this.leftToolDigSpeed);
-        int progress = (int)(10f*this.leftToolProgress/breakTicksRequired);
-        level().destroyBlockProgress(this.getId(),blockHitResult.getBlockPos(),progress);
-        if (this.leftToolProgress>=breakTicksRequired) {
-            this.leftToolProgress=0;
-            this.level().destroyBlock(blockHitResult.getBlockPos(),true);
-        }
-    }
-
-    protected void useRightTool() {
-        LogUtils.getLogger().info("Using Right mecha tool!!");
-        LogUtils.getLogger().info(this.coreItemStack.getItem().toString());
-        LogUtils.getLogger().info(String.valueOf(this.coreModule==null));
-        LogUtils.getLogger().info(this.frameItemStack.getItem().toString());
-        LogUtils.getLogger().info(String.valueOf(this.frameModule==null));
-        LogUtils.getLogger().info(this.legsItemStack.getItem().toString());
-        LogUtils.getLogger().info(String.valueOf(this.legModule==null));
-        LogUtils.getLogger().info(String.valueOf(this.legModule.getJumpPower()));
-        LogUtils.getLogger().info(this.leftToolItemStack.getItem().toString());
-        LogUtils.getLogger().info(String.valueOf(this.leftArmModule==null));
-        LogUtils.getLogger().info(this.rightToolItemStack.getItem().toString());
-        LogUtils.getLogger().info(String.valueOf(this.rightArmModule==null));
-    }
-
-    //Copied helper function from the Item class, with minor modifications
-    protected static BlockHitResult getEntityPOVHitResult(Level pLevel, Entity pEntity, double reach, ClipContext.Fluid pFluidMode) {
-        float f = pEntity.getXRot();
-        float f1 = pEntity.getYRot();
-        Vec3 vec3 = pEntity.getEyePosition();
-        float f2 = Mth.cos(-f1 * ((float)Math.PI / 180F) - (float)Math.PI);
-        float f3 = Mth.sin(-f1 * ((float)Math.PI / 180F) - (float)Math.PI);
-        float f4 = -Mth.cos(-f * ((float)Math.PI / 180F));
-        float f5 = Mth.sin(-f * ((float)Math.PI / 180F));
-        float f6 = f3 * f4;
-        float f7 = f2 * f4;
-        double d0 = reach;
-        Vec3 vec31 = vec3.add((double)f6 * d0, (double)f5 * d0, (double)f7 * d0);
-        return pLevel.clip(new ClipContext(vec3, vec31, ClipContext.Block.OUTLINE, pFluidMode, pEntity));
     }
 
     //Untested in multiplayer. Copy-pasted from horse
@@ -330,7 +318,11 @@ public class Mecha extends LivingEntity {
 
     @Override
     protected Vec3 getRiddenInput(Player pPlayer, Vec3 pTravelVector) {
-        return new Vec3(pPlayer.xxa*0.5f, 0d, pPlayer.zza);
+        float zza = pPlayer.zza;
+        if (zza<0) {
+            zza = zza * this.legModule.getBackwardsFactor();
+        }
+        return new Vec3(pPlayer.xxa*this.legModule.getSideStepFactor(), 0d, zza);
         //return super.getRiddenInput(pPlayer, pTravelVector);
     }
 
@@ -370,15 +362,15 @@ public class Mecha extends LivingEntity {
     //NBT save data
     public void addAdditionalSaveData(CompoundTag pCompound) {
         super.addAdditionalSaveData(pCompound);
-        pCompound.put("MechCoreBlock", this.coreItemStack.save(new CompoundTag()));
-        pCompound.put("MechFrameBlock", this.frameItemStack.save(new CompoundTag()));
-        pCompound.put("MechLegBlock", this.legsItemStack.save(new CompoundTag()));
-        pCompound.put("LeftToolBlock", this.leftToolItemStack.save(new CompoundTag()));
-        pCompound.put("RightToolBlock", this.rightToolItemStack.save(new CompoundTag()));
+        pCompound.put("MechCoreBlock", this.getEntityData().get(DATA_CORE_ITEM).save(new CompoundTag()));
+        pCompound.put("MechFrameBlock", this.getEntityData().get(DATA_FRAME_ITEM).save(new CompoundTag()));
+        pCompound.put("MechLegBlock", this.getEntityData().get(DATA_LEGS_ITEM).save(new CompoundTag()));
+        pCompound.put("LeftToolBlock", this.getEntityData().get(DATA_LEFT_TOOL_ITEM).save(new CompoundTag()));
+        pCompound.put("RightToolBlock", this.getEntityData().get(DATA_RIGHT_TOOL_ITEM).save(new CompoundTag()));
     }
     public void readAdditionalSaveData(CompoundTag pCompound) {
         super.readAdditionalSaveData(pCompound);
-        this.setModules(
+        this.setModuleItems(
                 ItemStack.of(pCompound.getCompound("MechCoreBlock")),
                 ItemStack.of(pCompound.getCompound("MechFrameBlock")),
                 ItemStack.of(pCompound.getCompound("MechLegBlock")),
@@ -395,6 +387,9 @@ public class Mecha extends LivingEntity {
     //Will later be replaced by a function dependent on modules
     @Override
     public boolean causeFallDamage(float pFallDistance, float pMultiplier, DamageSource pSource) {
+        if (this.legModule.getTakeFallDamage()) {
+            return super.causeFallDamage(pFallDistance, pMultiplier, pSource);
+        }
         return false;
     }
 

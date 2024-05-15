@@ -1,12 +1,10 @@
 package fr.sixela.mechawalkers.block.MechModule.core;
 
-import com.mojang.logging.LogUtils;
 import fr.sixela.mechawalkers.block.MechModule.MechModuleAbstractBlock;
 import fr.sixela.mechawalkers.block.MechModule.arm.MechArmAbstractBlock;
 import fr.sixela.mechawalkers.block.MechModule.frame.MechFrameAbstractBlock;
 import fr.sixela.mechawalkers.block.MechModule.leg.MechLegAbstractBlock;
 import fr.sixela.mechawalkers.block.MechaWalkersBlocks;
-import fr.sixela.mechawalkers.entity.CarrierGolem;
 import fr.sixela.mechawalkers.entity.Mecha;
 import fr.sixela.mechawalkers.entity.MechaWalkersEntities;
 import fr.sixela.mechawalkers.item.MechaWalkersItems;
@@ -78,7 +76,7 @@ public abstract class MechCoreAbstractBlock extends MechModuleAbstractBlock {
             LogUtils.getLogger().info(patternMatch.getBlock(2, 3, 0).getState().getBlock().getDescriptionId()); //foot 2*/
             Mecha mecha = MechaWalkersEntities.MECHA.get().create(pLevel);
             if (mecha != null) {
-                mecha.setModules(
+                mecha.setModuleItems(
                         patternMatch.getBlock(1, 1, 0).getState().getBlock().asItem().getDefaultInstance(),
                         patternMatch.getBlock(1, 2, 0).getState().getBlock().asItem().getDefaultInstance(),
                         patternMatch.getBlock(0, 3, 0).getState().getBlock().asItem().getDefaultInstance(),

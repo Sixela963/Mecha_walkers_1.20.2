@@ -22,6 +22,16 @@ public class SimpleLegModule extends LegAbstractModule{
     }
 
     @Override
+    public float getLegTurnSpeed() {
+        return 4f;
+    }
+
+    @Override
+    public float getBackwardsFactor() {
+        return 0.8f;
+    }
+
+    @Override
     public boolean getTakeFallDamage() {
         return false;
     }
