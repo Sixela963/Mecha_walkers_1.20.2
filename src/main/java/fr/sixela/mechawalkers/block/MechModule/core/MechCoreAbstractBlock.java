@@ -74,6 +74,9 @@ public abstract class MechCoreAbstractBlock extends MechModuleAbstractBlock {
             LogUtils.getLogger().info(patternMatch.getBlock(2, 1, 0).getState().getBlock().getDescriptionId()); //tool 2
             LogUtils.getLogger().info(patternMatch.getBlock(0, 3, 0).getState().getBlock().getDescriptionId()); //foot 1
             LogUtils.getLogger().info(patternMatch.getBlock(2, 3, 0).getState().getBlock().getDescriptionId()); //foot 2*/
+            if (patternMatch.getBlock(2, 3, 0).getState().getBlock().getDescriptionId()!=patternMatch.getBlock(0, 3, 0).getState().getBlock().getDescriptionId()) {
+                return;
+            }
             Mecha mecha = MechaWalkersEntities.MECHA.get().create(pLevel);
             if (mecha != null) {
                 mecha.setModuleItems(

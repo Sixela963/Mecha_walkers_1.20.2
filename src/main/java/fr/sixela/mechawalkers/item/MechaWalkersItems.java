@@ -35,8 +35,8 @@ public class MechaWalkersItems {
             () -> new BlockItem(MechaWalkersBlocks.COPPER_FRAME_BLOCK.get(), new Item.Properties()));
     public static final RegistryObject<Item> IRON_FRAME_ITEM = ITEMS.register("iron_mech_frame",
             () -> new BlockItem(MechaWalkersBlocks.IRON_FRAME_BLOCK.get(), new Item.Properties()));
-    public static final RegistryObject<Item> SIMPLE_LEG_ITEM = ITEMS.register("simple_mech_leg",
-            () -> new BlockItem(MechaWalkersBlocks.SIMPLE_LEG_BLOCK.get(), new Item.Properties()));
+    public static final RegistryObject<Item> BASIC_LEG_ITEM = ITEMS.register("basic_mech_leg",
+            () -> new BlockItem(MechaWalkersBlocks.BASIC_LEG_BLOCK.get(), new Item.Properties()));
     public static final RegistryObject<Item> SIMPLEDRILL_ARM_ITEM = ITEMS.register("simpledrill_mech_arm",
             () -> new BlockItem(MechaWalkersBlocks.SIMPLEDRILL_ARM_BLOCK.get(), new Item.Properties()));
 
@@ -54,7 +54,7 @@ public class MechaWalkersItems {
                         pOutput.accept(WOOD_FRAME_ITEM.get());
                         pOutput.accept(COPPER_FRAME_ITEM.get());
                         pOutput.accept(IRON_FRAME_ITEM.get());
-                        pOutput.accept(SIMPLE_LEG_ITEM.get());
+                        pOutput.accept(BASIC_LEG_ITEM.get());
                         pOutput.accept(SIMPLEDRILL_ARM_ITEM.get());
                     }).build());
 

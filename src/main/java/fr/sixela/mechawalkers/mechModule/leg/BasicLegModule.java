@@ -1,6 +1,6 @@
 package fr.sixela.mechawalkers.mechModule.leg;
 
-public class SimpleLegModule extends LegAbstractModule{
+public class BasicLegModule extends LegAbstractModule{
     @Override
     public float getSpeedMultiplier() {
         return 1f;

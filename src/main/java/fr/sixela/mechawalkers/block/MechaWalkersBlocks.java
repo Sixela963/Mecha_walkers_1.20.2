@@ -6,7 +6,7 @@ import fr.sixela.mechawalkers.block.MechModule.core.DebugCoreBlock;
 import fr.sixela.mechawalkers.block.MechModule.frame.CopperFrameBlock;
 import fr.sixela.mechawalkers.block.MechModule.frame.IronFrameBlock;
 import fr.sixela.mechawalkers.block.MechModule.frame.WoodFrameBlock;
-import fr.sixela.mechawalkers.block.MechModule.leg.SimpleLegBlock;
+import fr.sixela.mechawalkers.block.MechModule.leg.BasicLegBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -34,8 +34,8 @@ public class MechaWalkersBlocks {
             () -> new IronFrameBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK)));
 
     //MECH LEG BLOCKS
-    public static final RegistryObject<Block> SIMPLE_LEG_BLOCK = BLOCKS.register("simple_mech_leg",
-            () -> new SimpleLegBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK)));
+    public static final RegistryObject<Block> BASIC_LEG_BLOCK = BLOCKS.register("basic_mech_leg",
+            () -> new BasicLegBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK)));
 
     //MECH ARM BLOCKS
     public static final RegistryObject<Block> SIMPLEDRILL_ARM_BLOCK = BLOCKS.register("simpledrill_mech_arm",
