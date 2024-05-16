@@ -27,7 +27,7 @@ import net.minecraft.world.level.gameevent.GameEvent;
 
 public class WeldingTorchItem extends Item {
 
-    private static final float golemHealAmount = 25f;
+    private static final float golemHealAmount = 1f;
     private static final int maxUses = 100;
     public WeldingTorchItem(Properties pProperties) {
         super(pProperties);
@@ -148,7 +148,7 @@ public class WeldingTorchItem extends Item {
 
 
         //Repair golems
-        if ((pInteractionTarget instanceof AbstractGolem)|(pInteractionTarget instanceof Mecha))
+        if ((pInteractionTarget instanceof AbstractGolem)||(pInteractionTarget instanceof Mecha))
         {
             float healthBefore = pInteractionTarget.getHealth();
             pInteractionTarget.heal(golemHealAmount);

@@ -5,5 +5,6 @@ import fr.sixela.mechawalkers.mechModule.AbstractModule;
 
 public abstract class MechCoreAbstractModule extends AbstractModule {
 
+    public abstract boolean getCorePowered();
     public abstract float getMovementPower();
 }

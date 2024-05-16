@@ -2,15 +2,11 @@ package fr.sixela.mechawalkers.block;
 
 import fr.sixela.mechawalkers.MechaWalkersMod;
 import fr.sixela.mechawalkers.block.MechModule.arm.SimpleDrillArmBlock;
-import fr.sixela.mechawalkers.block.MechModule.core.SteamEngineCoreBlock;
+import fr.sixela.mechawalkers.block.MechModule.core.DebugCoreBlock;
 import fr.sixela.mechawalkers.block.MechModule.frame.CopperFrameBlock;
 import fr.sixela.mechawalkers.block.MechModule.frame.IronFrameBlock;
 import fr.sixela.mechawalkers.block.MechModule.frame.WoodFrameBlock;
 import fr.sixela.mechawalkers.block.MechModule.leg.SimpleLegBlock;
-import fr.sixela.mechawalkers.item.MechaWalkersItems;
-import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -19,8 +15,6 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 
-import java.util.function.Supplier;
-
 public class MechaWalkersBlocks {
     public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, MechaWalkersMod.MODID);
 
@@ -28,8 +22,8 @@ public class MechaWalkersBlocks {
             () -> new MechControlSeatBlock(BlockBehaviour.Properties.copy(Blocks.PISTON).noOcclusion()));
 
     //MECH CORE BLOCKS
-    public static final RegistryObject<Block> STEAM_ENGINE_CORE_BLOCK = BLOCKS.register("steam_engine_mech_core",
-            () -> new SteamEngineCoreBlock(BlockBehaviour.Properties.copy(Blocks.COPPER_BLOCK)));
+    public static final RegistryObject<Block> DEBUG_CORE_BLOCK = BLOCKS.register("debug_mech_core",
+            () -> new DebugCoreBlock(BlockBehaviour.Properties.copy(Blocks.STONE)));
 
     //MECH FRAME BLOCKS
     public static final RegistryObject<Block> WOOD_FRAME_BLOCK = BLOCKS.register("wood_mech_frame",

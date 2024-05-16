@@ -27,8 +27,8 @@ public class MechaWalkersItems {
     //----------------------------BLOCK ITEMS----------------------------//
     public static final RegistryObject<Item> MECH_CONTROL_SEAT_ITEM = ITEMS.register("mech_control_seat",
             () -> new BlockItem(MechaWalkersBlocks.MECH_CONTROL_SEAT_BLOCK.get(), new Item.Properties()));
-    public static final RegistryObject<Item> STEAM_ENGINE_CORE_ITEM = ITEMS.register("steam_engine_mech_core",
-            () -> new BlockItem(MechaWalkersBlocks.STEAM_ENGINE_CORE_BLOCK.get(), new Item.Properties()));
+    public static final RegistryObject<Item> DEBUG_CORE_ITEM = ITEMS.register("debug_mech_core",
+            () -> new BlockItem(MechaWalkersBlocks.DEBUG_CORE_BLOCK.get(), new Item.Properties()));
     public static final RegistryObject<Item> WOOD_FRAME_ITEM = ITEMS.register("wood_mech_frame",
             () -> new BlockItem(MechaWalkersBlocks.WOOD_FRAME_BLOCK.get(), new Item.Properties()));
     public static final RegistryObject<Item> COPPER_FRAME_ITEM = ITEMS.register("copper_mech_frame",
@@ -50,7 +50,7 @@ public class MechaWalkersItems {
                     .displayItems((pParameters, pOutput) -> {
                         pOutput.accept(WELDING_TORCH.get()); //ADD ITEMS HERE
                         pOutput.accept(MECH_CONTROL_SEAT_ITEM.get());
-                        pOutput.accept(STEAM_ENGINE_CORE_ITEM.get());
+                        pOutput.accept(DEBUG_CORE_ITEM.get());
                         pOutput.accept(WOOD_FRAME_ITEM.get());
                         pOutput.accept(COPPER_FRAME_ITEM.get());
                         pOutput.accept(IRON_FRAME_ITEM.get());

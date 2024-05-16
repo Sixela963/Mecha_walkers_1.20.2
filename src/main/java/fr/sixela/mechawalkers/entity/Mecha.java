@@ -1,7 +1,6 @@
 package fr.sixela.mechawalkers.entity;
 
 
-import com.mojang.logging.LogUtils;
 import fr.sixela.mechawalkers.block.MechModule.arm.MechArmAbstractBlock;
 import fr.sixela.mechawalkers.block.MechModule.core.MechCoreAbstractBlock;
 import fr.sixela.mechawalkers.block.MechModule.frame.MechFrameAbstractBlock;
@@ -27,11 +26,8 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
@@ -46,8 +42,11 @@ The main Mecha class
  */
 public class Mecha extends LivingEntity {
 
+    private boolean isPowered = false;
     private float yRotSpeed = 4f; //degree/tick
-    private static final float xRotSpeed = 6f; //degree/tick
+    private float xRotSpeed = 6f; //degree/tick
+
+    private float powerSum = 0f;
 
     private boolean usingLeftTool;
     private boolean wasUsingLeftTool;
@@ -81,7 +80,7 @@ public class Mecha extends LivingEntity {
     }
 
     @Override
-    public void onSyncedDataUpdated(EntityDataAccessor<?> pKey) {
+    public void onSyncedDataUpdated(@NotNull EntityDataAccessor<?> pKey) {
         super.onSyncedDataUpdated(pKey);
         if (DATA_CORE_ITEM.equals(pKey)||DATA_FRAME_ITEM.equals(pKey)||DATA_LEGS_ITEM.equals(pKey)||DATA_LEFT_TOOL_ITEM.equals(pKey)||DATA_RIGHT_TOOL_ITEM.equals(pKey)){
             //LogUtils.getLogger().info("Mecha specific data synced");
@@ -146,16 +145,6 @@ public class Mecha extends LivingEntity {
         this.updateStats();
     }
 
-    @Override
-    public boolean canCollideWith(@NotNull Entity pEntity) {
-        return super.canCollideWith(pEntity);
-    }
-
-    @Override
-    public boolean canBeCollidedWith() {
-        return true;
-    }
-
     public static AttributeSupplier setAttributes() {
         // Base default values
         return LivingEntity.createLivingAttributes()
@@ -179,6 +168,9 @@ public class Mecha extends LivingEntity {
 
         this.yRotSpeed = this.legModule.getLegTurnSpeed();
         this.setMaxUpStep(this.legModule.getStep());
+
+        this.powerSum = this.coreModule.getPowerCost()+this.frameModule.getPowerCost()+this.legModule.getPowerCost()+this.leftArmModule.getPowerCost()+this.rightArmModule.getPowerCost();
+        this.setPowered(!(this.powerSum < 0));
     }
 
     //To be replaced by module-specific functions
@@ -191,16 +183,37 @@ public class Mecha extends LivingEntity {
     }
 
     @Override
-    public float getEyeHeight(Pose pPose) {
+    public float getEyeHeight(@NotNull Pose pPose) {
         return 3f;
+    }
+
+    @Override
+    public boolean canCollideWith(@NotNull Entity pEntity) {
+        return super.canCollideWith(pEntity);
+    }
+
+    @Override
+    public boolean canBeCollidedWith() {
+        return true;
+    }
+
+    public void setPowered(boolean pIsPowered) {
+        this.isPowered = pIsPowered;
+    }
+    public boolean getPowered() {
+        return this.isPowered;
     }
 
     //Main movement code function (possibly move to specific function?)
     @Override
-    protected void tickRidden(Player pPlayer, Vec3 pTravelVector) {
-
+    protected void tickRidden(@NotNull Player pPlayer, @NotNull Vec3 pTravelVector) {
         //MOVEMENT
         super.tickRidden(pPlayer, pTravelVector);
+
+        if (!(this.isPowered && this.coreModule.getCorePowered())) {
+            return;
+        }
+
         Vec2 riddenRotation = this.getRiddenRotation(pPlayer);
         float newYRot = 0f;
         if (Math.abs(riddenRotation.y-this.getYRot()) > this.yRotSpeed) {
@@ -239,11 +252,6 @@ public class Mecha extends LivingEntity {
         }
     }
 
-    public void setUsingTools(boolean left, boolean right) {
-        this.usingLeftTool = left;
-        this.usingRightTool = right;
-    }
-
     @Override
     public void tick() {
         super.tick();
@@ -255,13 +263,17 @@ public class Mecha extends LivingEntity {
         this.leftArmModule.tick();
         this.rightArmModule.tick();
 
+        if (!(this.isPowered && this.coreModule.getCorePowered())) {
+            return;
+        }
+
         //LOGIC(?)
         if (!this.level().isClientSide) {
             if (!this.wasUsingLeftTool && this.usingLeftTool) {
                 this.leftArmModule.startUsing();
             } else if (this.wasUsingLeftTool && this.usingLeftTool) {
                 this.leftArmModule.use();
-            } else if (this.wasUsingLeftTool && !this.usingLeftTool) {
+            } else if (this.wasUsingLeftTool) {
                 this.leftArmModule.stopUsing();
             }
             this.wasUsingLeftTool = this.usingLeftTool;
@@ -270,16 +282,21 @@ public class Mecha extends LivingEntity {
                 this.rightArmModule.startUsing();
             } else if (this.wasUsingRightTool && this.usingRightTool) {
                 this.rightArmModule.use();
-            } else if (this.wasUsingRightTool && !this.usingRightTool) {
+            } else if (this.wasUsingRightTool) {
                 this.rightArmModule.stopUsing();
             }
             this.wasUsingRightTool = this.usingRightTool;
         }
     }
 
+    public void setUsingTools(boolean left, boolean right) {
+        this.usingLeftTool = left;
+        this.usingRightTool = right;
+    }
+
     //Untested in multiplayer. Copy-pasted from horse
     @Override
-    public InteractionResult interact(Player pPlayer, InteractionHand pHand) {
+    public @NotNull InteractionResult interact(Player pPlayer, @NotNull InteractionHand pHand) {
         if (pPlayer.isSecondaryUseActive()) {
             return InteractionResult.PASS;
         } else if (!this.isVehicle()) {
@@ -305,19 +322,19 @@ public class Mecha extends LivingEntity {
     }
 
 
-    protected Vector3f getPassengerAttachmentPoint(Entity pEntity, EntityDimensions pDimensions, float pScale) {
+    protected @NotNull Vector3f getPassengerAttachmentPoint(@NotNull Entity pEntity, @NotNull EntityDimensions pDimensions, float pScale) {
         return new Vector3f(0f, 2f, -0.3f);
     }
 
     @Override
-    protected float getRiddenSpeed(Player pPlayer) {
+    protected float getRiddenSpeed(@NotNull Player pPlayer) {
         return (float)this.getAttributeValue(Attributes.MOVEMENT_SPEED);
     }
 
 
 
     @Override
-    protected Vec3 getRiddenInput(Player pPlayer, Vec3 pTravelVector) {
+    protected @NotNull Vec3 getRiddenInput(Player pPlayer, @NotNull Vec3 pTravelVector) {
         float zza = pPlayer.zza;
         if (zza<0) {
             zza = zza * this.legModule.getBackwardsFactor();
@@ -335,7 +352,7 @@ public class Mecha extends LivingEntity {
     }
 
     @Override
-    protected void positionRider(Entity pPassenger, Entity.MoveFunction pCallback) {
+    protected void positionRider(@NotNull Entity pPassenger, Entity.@NotNull MoveFunction pCallback) {
         super.positionRider(pPassenger, pCallback);
         if (pPassenger instanceof LivingEntity) {
             ((LivingEntity)pPassenger).yBodyRot = this.yBodyRot;
@@ -343,7 +360,7 @@ public class Mecha extends LivingEntity {
     }
 
     @Override
-    public Vec3 getDismountLocationForPassenger(LivingEntity pPassenger) {
+    public @NotNull Vec3 getDismountLocationForPassenger(@NotNull LivingEntity pPassenger) {
         return this.position();
     }
 
@@ -360,7 +377,7 @@ public class Mecha extends LivingEntity {
     }
 
     //NBT save data
-    public void addAdditionalSaveData(CompoundTag pCompound) {
+    public void addAdditionalSaveData(@NotNull CompoundTag pCompound) {
         super.addAdditionalSaveData(pCompound);
         pCompound.put("MechCoreBlock", this.getEntityData().get(DATA_CORE_ITEM).save(new CompoundTag()));
         pCompound.put("MechFrameBlock", this.getEntityData().get(DATA_FRAME_ITEM).save(new CompoundTag()));
@@ -368,7 +385,7 @@ public class Mecha extends LivingEntity {
         pCompound.put("LeftToolBlock", this.getEntityData().get(DATA_LEFT_TOOL_ITEM).save(new CompoundTag()));
         pCompound.put("RightToolBlock", this.getEntityData().get(DATA_RIGHT_TOOL_ITEM).save(new CompoundTag()));
     }
-    public void readAdditionalSaveData(CompoundTag pCompound) {
+    public void readAdditionalSaveData(@NotNull CompoundTag pCompound) {
         super.readAdditionalSaveData(pCompound);
         this.setModuleItems(
                 ItemStack.of(pCompound.getCompound("MechCoreBlock")),
@@ -386,7 +403,7 @@ public class Mecha extends LivingEntity {
 
     //Will later be replaced by a function dependent on modules
     @Override
-    public boolean causeFallDamage(float pFallDistance, float pMultiplier, DamageSource pSource) {
+    public boolean causeFallDamage(float pFallDistance, float pMultiplier, @NotNull DamageSource pSource) {
         if (this.legModule.getTakeFallDamage()) {
             return super.causeFallDamage(pFallDistance, pMultiplier, pSource);
         }
@@ -394,7 +411,7 @@ public class Mecha extends LivingEntity {
     }
 
     @Override
-    public Iterable<ItemStack> getArmorSlots() {
+    public @NotNull Iterable<ItemStack> getArmorSlots() {
         return new Iterable<ItemStack>() {
             @NotNull
             @Override
@@ -405,17 +422,17 @@ public class Mecha extends LivingEntity {
     }
 
     @Override
-    public ItemStack getItemBySlot(EquipmentSlot pSlot) {
+    public @NotNull ItemStack getItemBySlot(@NotNull EquipmentSlot pSlot) {
         return ItemStack.EMPTY;
     }
 
     @Override
-    public void setItemSlot(EquipmentSlot pSlot, ItemStack pStack) {
+    public void setItemSlot(@NotNull EquipmentSlot pSlot, @NotNull ItemStack pStack) {
         return;
     }
 
     @Override
-    public HumanoidArm getMainArm() {
+    public @NotNull HumanoidArm getMainArm() {
         return HumanoidArm.RIGHT;
     }
 }
