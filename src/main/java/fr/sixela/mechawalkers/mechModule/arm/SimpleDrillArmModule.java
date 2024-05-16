@@ -5,6 +5,8 @@ import fr.sixela.mechawalkers.entity.Mecha;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
@@ -68,7 +70,13 @@ public class SimpleDrillArmModule extends MechArmAbstractModule{
 //        LogUtils.getLogger().info(blockHitResult.getBlockPos().toString());
         toolProgress++;
         float blockHardness = mechaEntity.level().getBlockState(blockHitResult.getBlockPos()).getDestroySpeed(mechaEntity.level(),blockHitResult.getBlockPos());
-        boolean canHarvest = (mechaEntity.level().getBlockState(blockHitResult.getBlockPos()).is(BlockTags.MINEABLE_WITH_PICKAXE)||(!mechaEntity.level().getBlockState(blockHitResult.getBlockPos()).requiresCorrectToolForDrops()));
+        if (blockHardness < 0) {
+            toolProgress = 0;
+            return;
+        }
+        boolean canHarvest = ((mechaEntity.level().getBlockState(blockHitResult.getBlockPos()).is(BlockTags.MINEABLE_WITH_PICKAXE)
+                && !mechaEntity.level().getBlockState(blockHitResult.getBlockPos()).is(BlockTags.NEEDS_DIAMOND_TOOL))
+                ||(!mechaEntity.level().getBlockState(blockHitResult.getBlockPos()).requiresCorrectToolForDrops()));
         int correctToolMultiplier =  mechaEntity.level().getBlockState(blockHitResult.getBlockPos()).is(BlockTags.MINEABLE_WITH_PICKAXE) ? 30 : 100;
         int breakTicksRequired = (int)(blockHardness*correctToolMultiplier/digSpeed);
         if (!canHarvest) {

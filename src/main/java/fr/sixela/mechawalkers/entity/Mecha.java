@@ -14,6 +14,7 @@ import fr.sixela.mechawalkers.network.MechaWalkersPacketHandler;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -46,18 +47,23 @@ public class Mecha extends LivingEntity {
     private float yRotSpeed = 4f; //degree/tick
     private float xRotSpeed = 6f; //degree/tick
 
-    private float powerSum = 0f;
-
     private boolean usingLeftTool;
     private boolean wasUsingLeftTool;
     private boolean usingRightTool;
     private boolean wasUsingRightTool;
+
+    private boolean pressingPowerButton;
+    private boolean wasPressingPowerButton;
+
+    private boolean pressingCoreSpecialButton;
+    private boolean wasPressingCoreSpecialButton;
 
     private static final EntityDataAccessor<ItemStack> DATA_CORE_ITEM = SynchedEntityData.defineId(Mecha.class, EntityDataSerializers.ITEM_STACK);
     private static final EntityDataAccessor<ItemStack> DATA_FRAME_ITEM = SynchedEntityData.defineId(Mecha.class, EntityDataSerializers.ITEM_STACK);
     private static final EntityDataAccessor<ItemStack> DATA_LEGS_ITEM = SynchedEntityData.defineId(Mecha.class, EntityDataSerializers.ITEM_STACK);
     private static final EntityDataAccessor<ItemStack> DATA_LEFT_TOOL_ITEM = SynchedEntityData.defineId(Mecha.class, EntityDataSerializers.ITEM_STACK);
     private static final EntityDataAccessor<ItemStack> DATA_RIGHT_TOOL_ITEM = SynchedEntityData.defineId(Mecha.class, EntityDataSerializers.ITEM_STACK);
+    private static final EntityDataAccessor<Boolean> DATA_MECHA_POWERED_ON = SynchedEntityData.defineId(Mecha.class, EntityDataSerializers.BOOLEAN);
     protected MechCoreAbstractModule coreModule;
     protected MechFrameAbstractModule frameModule;
     protected LegAbstractModule legModule;
@@ -76,6 +82,7 @@ public class Mecha extends LivingEntity {
         this.getEntityData().define(DATA_LEGS_ITEM,ItemStack.EMPTY);
         this.getEntityData().define(DATA_LEFT_TOOL_ITEM,ItemStack.EMPTY);
         this.getEntityData().define(DATA_RIGHT_TOOL_ITEM,ItemStack.EMPTY);
+        this.getEntityData().define(DATA_MECHA_POWERED_ON,true);
         super.defineSynchedData();
     }
 
@@ -169,15 +176,12 @@ public class Mecha extends LivingEntity {
         this.yRotSpeed = this.legModule.getLegTurnSpeed();
         this.setMaxUpStep(this.legModule.getStep());
 
-        this.powerSum = this.coreModule.getPowerCost()+this.frameModule.getPowerCost()+this.legModule.getPowerCost()+this.leftArmModule.getPowerCost()+this.rightArmModule.getPowerCost();
-        this.setPowered(!(this.powerSum < 0));
+        this.setPowered(this.canBePoweredOn());
     }
 
     //To be replaced by module-specific functions
     @Override
     protected float getJumpPower() {
-        //something is wrong with this function
-        //for some reason I can't correctly access the fields and methods from the instanciated entity when I am in one of those overridden protected functions. this is very annoying
         //return (float)this.getAttributeValue(Attributes.JUMP_STRENGTH) * super.getJumpPower();
         return this.legModule.getJumpPower() * super.getJumpPower();
     }
@@ -198,10 +202,15 @@ public class Mecha extends LivingEntity {
     }
 
     public void setPowered(boolean pIsPowered) {
-        this.isPowered = pIsPowered;
+        this.getEntityData().set(DATA_MECHA_POWERED_ON, pIsPowered);
     }
     public boolean getPowered() {
-        return this.isPowered;
+        return this.getEntityData().get(DATA_MECHA_POWERED_ON);
+    }
+
+    private boolean canBePoweredOn() {
+        float powerSum = this.coreModule.getPowerCost() + this.frameModule.getPowerCost() + this.legModule.getPowerCost() + this.leftArmModule.getPowerCost() + this.rightArmModule.getPowerCost();
+        return (powerSum < 0)&&this.coreModule.getCorePowered();
     }
 
     //Main movement code function (possibly move to specific function?)
@@ -210,7 +219,23 @@ public class Mecha extends LivingEntity {
         //MOVEMENT
         super.tickRidden(pPlayer, pTravelVector);
 
-        if (!(this.isPowered && this.coreModule.getCorePowered())) {
+
+        //PLAYER INPUT
+        if (this.isControlledByLocalInstance()) {
+            if (pPlayer instanceof LocalPlayer){
+                this.setJumping(((LocalPlayer) pPlayer).input.jumping && this.getPowered());
+                MechaWalkersPacketHandler.INSTANCE.send(new MechaWalkersPacketHandler.ServerboundMechaToolPacket(
+                                ModEventBusEvents.KEYMAP_TOOL_LEFT.get().isDown(),
+                                ModEventBusEvents.KEYMAP_TOOL_RIGHT.get().isDown(),
+                                ModEventBusEvents.KEYMAP_POWER_ON.get().isDown(),
+                                ModEventBusEvents.KEYMAP_CORE_SPECIAL.get().isDown()),
+                        Minecraft.getInstance().getConnection().getConnection());
+//                this.usingLeftTool = ModEventBusEvents.KEYMAP_TOOL_LEFT.get().isDown();
+//                this.usingRightTool =ModEventBusEvents.KEYMAP_TOOL_RIGHT.get().isDown();
+            }
+        }
+
+        if (!(this.getEntityData().get(DATA_MECHA_POWERED_ON))) {
             return;
         }
 
@@ -238,18 +263,6 @@ public class Mecha extends LivingEntity {
         this.setRot(newYRot,newXRot);
         this.yBodyRot = this.yHeadRot = this.getYRot();
 //        this.yBodyRot = this.yHeadRot = this.getYRot();
-
-        //PLAYER INPUT
-        if (this.isControlledByLocalInstance()) {
-            if (pPlayer instanceof LocalPlayer){
-                this.setJumping(((LocalPlayer) pPlayer).input.jumping);
-                MechaWalkersPacketHandler.INSTANCE.send(new MechaWalkersPacketHandler.ServerboundMechaToolPacket(ModEventBusEvents.KEYMAP_TOOL_LEFT.get().isDown(),
-                                ModEventBusEvents.KEYMAP_TOOL_RIGHT.get().isDown()),
-                        Minecraft.getInstance().getConnection().getConnection());
-//                this.usingLeftTool = ModEventBusEvents.KEYMAP_TOOL_LEFT.get().isDown();
-//                this.usingRightTool =ModEventBusEvents.KEYMAP_TOOL_RIGHT.get().isDown();
-            }
-        }
     }
 
     @Override
@@ -263,7 +276,17 @@ public class Mecha extends LivingEntity {
         this.leftArmModule.tick();
         this.rightArmModule.tick();
 
-        if (!(this.isPowered && this.coreModule.getCorePowered())) {
+        if (!this.level().isClientSide) {
+            if (!this.wasPressingPowerButton && this.pressingPowerButton) {
+                this.setPowered(!this.getPowered());
+                if (this.getControllingPassenger() instanceof Player) {
+                    ((Player)this.getControllingPassenger()).displayClientMessage(Component.literal(this.getPowered()?"Mecha turned on":"Mecha turned off"), true);
+                }
+            }
+            this.wasPressingPowerButton = this.pressingPowerButton;
+        }
+
+        if (!(this.getEntityData().get(DATA_MECHA_POWERED_ON))) {
             return;
         }
 
@@ -286,12 +309,18 @@ public class Mecha extends LivingEntity {
                 this.rightArmModule.stopUsing();
             }
             this.wasUsingRightTool = this.usingRightTool;
+            this.coreModule.setCoreSpecialInputActive(this.pressingCoreSpecialButton);
+        }
+        else {
+            this.coreModule.setCoreSpecialInputActive(ModEventBusEvents.KEYMAP_CORE_SPECIAL.get().isDown());
         }
     }
 
-    public void setUsingTools(boolean left, boolean right) {
-        this.usingLeftTool = left;
-        this.usingRightTool = right;
+    public void setSpecialInputs(boolean leftTool, boolean rightTool, boolean powerButton, boolean coreSpecial) {
+        this.usingLeftTool = leftTool;
+        this.usingRightTool = rightTool;
+        this.pressingPowerButton = powerButton;
+        this.pressingCoreSpecialButton = coreSpecial;
     }
 
     //Untested in multiplayer. Copy-pasted from horse
@@ -328,13 +357,17 @@ public class Mecha extends LivingEntity {
 
     @Override
     protected float getRiddenSpeed(@NotNull Player pPlayer) {
-        return (float)this.getAttributeValue(Attributes.MOVEMENT_SPEED);
+        //return (float)this.getAttributeValue(Attributes.MOVEMENT_SPEED);
+        return 0.05f*this.legModule.getSpeedMultiplier()*(this.coreModule.getMovementPower()/this.frameModule.getMass());
     }
 
 
 
     @Override
     protected @NotNull Vec3 getRiddenInput(Player pPlayer, @NotNull Vec3 pTravelVector) {
+        if (!this.getPowered()) {
+            return Vec3.ZERO;
+        }
         float zza = pPlayer.zza;
         if (zza<0) {
             zza = zza * this.legModule.getBackwardsFactor();
@@ -384,6 +417,7 @@ public class Mecha extends LivingEntity {
         pCompound.put("MechLegBlock", this.getEntityData().get(DATA_LEGS_ITEM).save(new CompoundTag()));
         pCompound.put("LeftToolBlock", this.getEntityData().get(DATA_LEFT_TOOL_ITEM).save(new CompoundTag()));
         pCompound.put("RightToolBlock", this.getEntityData().get(DATA_RIGHT_TOOL_ITEM).save(new CompoundTag()));
+        pCompound.putBoolean("MechTurnedOn",this.getPowered());
     }
     public void readAdditionalSaveData(@NotNull CompoundTag pCompound) {
         super.readAdditionalSaveData(pCompound);
@@ -393,6 +427,7 @@ public class Mecha extends LivingEntity {
                 ItemStack.of(pCompound.getCompound("MechLegBlock")),
                 ItemStack.of(pCompound.getCompound("LeftToolBlock")),
                 ItemStack.of(pCompound.getCompound("RightToolBlock")));
+        this.setPowered(pCompound.getBoolean("MechTurnedOn"));
     }
 
     //Function overriden to remove the behaviour where the mech would turn toward its direction

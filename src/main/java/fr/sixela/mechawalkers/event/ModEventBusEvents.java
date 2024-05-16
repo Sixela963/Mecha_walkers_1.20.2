@@ -42,11 +42,27 @@ public class ModEventBusEvents {
                 "key.categories.misc"
         );
     });
+    @OnlyIn(Dist.CLIENT)
+    public static final Lazy<KeyMapping> KEYMAP_CORE_SPECIAL = Lazy.of(()-> {
+        return new KeyMapping("key.mechawalkers.corespecial",
+                GLFW.GLFW_KEY_C,
+                "key.categories.misc"
+        );
+    });
+    @OnlyIn(Dist.CLIENT)
+    public static final Lazy<KeyMapping> KEYMAP_POWER_ON = Lazy.of(()-> {
+        return new KeyMapping("key.mechawalkers.poweron",
+                GLFW.GLFW_KEY_F,
+                "key.categories.misc"
+        );
+    });
 
     @OnlyIn(Dist.CLIENT)
     @SubscribeEvent
     public static void onRegisterKeyMappingsEvent (RegisterKeyMappingsEvent event) {
         event.register(KEYMAP_TOOL_LEFT.get());
         event.register(KEYMAP_TOOL_RIGHT.get());
+        event.register(KEYMAP_CORE_SPECIAL.get());
+        event.register(KEYMAP_POWER_ON.get());
     }
 }

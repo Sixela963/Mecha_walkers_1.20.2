@@ -6,10 +6,16 @@ import fr.sixela.mechawalkers.entity.CarrierGolem;
 import fr.sixela.mechawalkers.entity.Mecha;
 import fr.sixela.mechawalkers.entity.MechaWalkersEntities;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.entity.monster.Enemy;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.FurnaceBlock;
 import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -37,6 +43,14 @@ public class ForgeEventBusEvents {
 
             level.blockUpdated(blockPos, Blocks.AIR);
             level.blockUpdated(blockPos.below(), Blocks.AIR);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onEntityJoinLevel(EntityJoinLevelEvent event) {
+        if ((event.getEntity() instanceof Enemy) && (event.getEntity() instanceof Mob)) {
+            Mob mob = (Mob)event.getEntity();
+            mob.goalSelector.addGoal(2,new NearestAttackableTargetGoal<>(mob,Mecha.class,true));
         }
     }
 }

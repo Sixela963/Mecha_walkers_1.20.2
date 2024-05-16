@@ -1,6 +1,7 @@
 package fr.sixela.mechawalkers.mechModule.core;
 
 public class DebugCoreModule extends MechCoreAbstractModule{
+
     @Override
     public boolean getCorePowered() {
         return true;
@@ -8,7 +9,7 @@ public class DebugCoreModule extends MechCoreAbstractModule{
 
     @Override
     public float getMovementPower() {
-        return 1000f;
+        return (this.coreSpecialInput ? 3000f:1000f) ;
     }
 
     @Override
